@@ -1,0 +1,9 @@
+The original Onshape URDF export. Every <mass> is a unit-density artifact:
+mass numerically equals the mesh volume in m^3. Summed, the entire robot
+comes to 1.06 GRAMS.
+
+It also references the collision-proxy meshes, so both the masses and the
+geometry are wrong.
+
+Use ../../sim/cubebot.urdf instead — same kinematics, real masses and
+inertias, no mesh dependencies.

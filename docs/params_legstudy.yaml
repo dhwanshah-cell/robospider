@@ -1,0 +1,426 @@
+# =====================================================================
+# CubeBot sprawled-quadruped leg study -- single source of truth.
+# =====================================================================
+# Every leaf is {value, source, note?}.
+#
+#   source: cad      -> extracted from the real CubeBot CAD
+#                       (VGlukhov-git/CubeBot_RL Onshape URDF + STL meshes)
+#   source: spec     -> given verbatim in the experiment request
+#   source: assumed  -> ESTIMATED BY THE SIM AUTHOR. Every one of these
+#                       carries a one-line reason and is reprinted in the
+#                       "ASSUMED VALUES" table at the end of `python run.py`.
+#
+# Sweep anything here and re-run `python run.py`; nothing is hard-coded
+# anywhere else.
+# ---------------------------------------------------------------------
+
+provenance:
+  cad_source:
+    value: "https://github.com/VGlukhov-git/CubeBot_RL (cubebot/urdf/cubebot.urdf + meshes/*.stl)"
+    source: cad
+  cad_note:
+    value: >-
+      Onshape URDF export. The <mass> fields in that URDF are unit-density
+      artifacts (every 'mass' equals the mesh volume in m^3 exactly), so
+      masses there are meaningless -- but the VOLUMES, the inertia tensor
+      SHAPES and all joint/axis geometry are real and are what we use.
+    source: cad
+  project_page_status:
+    value: "https://tnkr.ai/vladimirroboticss-workspace/cubebot -- HTTP 403 (bot detection); BOM + print settings NOT retrieved"
+    source: cad
+
+# ---------------------------------------------------------------------
+# 1. KINEMATICS  (all lengths metres, all angles radians)
+# ---------------------------------------------------------------------
+# Leg-local frame, neutral stance (all three joints at zero):
+#   +x = outward along the femur   +y = along the pitch/knee axis   +z = up
+# At q = 0 the femur is horizontal (+x) and the tibia hangs vertically
+# (-z) with the ball foot directly below the knee -- the requested pose.
+kinematics:
+  dof_per_leg:
+    value: 3
+    source: cad
+    note: "CONFIRMED from CAD, not assumed: chain bottom_case -[revolute_10]-> part_1_2 -[revolute_12]-> leg_middle_part -[revolute_3]-> part_1_4 -> foot(fixed). 12 revolute joints / 4 legs."
+
+  shoulder_yaw_axis:
+    value: [0.0, 0.0, 1.0]
+    source: cad
+    note: "revolute_10 axis (0,-1,0) in a child frame rotated Rx(+90deg) maps to body (0,0,-1) => vertical."
+  shoulder_pitch_axis:
+    value: [0.0, 1.0, 0.0]
+    source: cad
+    note: "revolute_12 axis maps to body -y => horizontal, perpendicular to the femur."
+  knee_axis:
+    value: [0.0, 1.0, 0.0]
+    source: cad
+    note: "revolute_3 axis is parallel to the pitch axis (standard pitch/knee co-planar leg)."
+
+  hip_mount_xyz:
+    value: [0.0465, 0.0385, -0.0232]
+    source: cad
+    note: "revolute_10 origin in the body frame; |x|=46.5mm, |y|=38.5mm => 93x77mm mount rectangle."
+
+  yaw_to_pitch_offset:
+    value: [0.025, 0.017, 0.0075]
+    source: cad
+    note: "revolute_12 origin (0.025,0.0075,0.017) rotated into the body frame. Perp. distance yaw-axis -> pitch-axis = 30.2mm."
+
+  femur_length:
+    value: 0.048
+    source: cad
+    note: "revolute_3 origin x-offset = 48.0mm. INDEPENDENTLY CONFIRMED: maintainer's own IK constant B=48 in CubeBot/test_controller.py."
+
+  tibia_length:
+    value: 0.0788241
+    source: cad
+    note: "Perpendicular distance knee axis -> foot centre = hypot(76.775, 17.856) mm. (The controller uses A=87.8mm, which is the tibia PART length 82.77mm plus a 5mm hand calibration fudge, not the kinematic length.)"
+
+  tibia_lateral_offset:
+    value: 0.017
+    source: cad
+    note: "Foot offset ALONG the knee axis (fork/clevis half-width). Contributes nothing to pitch-axis inertia by construction; does affect the yaw axis."
+
+  tibia_collision_radius:
+    value: 0.0075
+    source: assumed
+    note: "Radius of the capsule standing in for the shin. MUST stay below foot_radius (8.5mm): a fatter shin capsule pokes out under the ball foot and becomes the thing that touches the ground. Torque results are unaffected either way (the foot sits directly below the knee, so the horizontal lever arm is the femur length whichever geom contacts) but contact geometry and any climb would be wrong."
+  foot_radius:
+    value: 0.0085
+    source: cad
+    note: "Foot.stl bounding box 16.98 x 17.00 x 16.95 mm; mesh volume 2.560cm^3 == sphere of r=8.5mm to 3 sig figs, so it is a solid ball."
+
+  stance_yaw_deg:
+    value: 48.8
+    source: cad
+    note: "TOTAL splay of the foot off the body fore-aft axis. From points/animation.py the mid-stance foot target gives omega = atan2(z,x) = atan2(60, 52.5) = 48.8deg. The leg supplies 25.0deg of this for free via its own lateral offset; the mount makes up the rest. Rotating about a vertical axis changes no torque, so this only sets the footprint used by the tripod solve."
+
+  body_half_extents:
+    value: [0.0625, 0.0525, 0.0412]
+    source: cad
+    note: "The maintainer's own collision box in cubebot_mesh_collision.xml (125 x 105 x 82.4 mm)."
+
+# ---------------------------------------------------------------------
+# 2. MATERIAL / MASS MODEL
+# ---------------------------------------------------------------------
+material:
+  pla_density_g_cm3:
+    value: 1.24
+    source: assumed
+    note: "PLA default -- project docs (tnkr.ai) returned HTTP 403 so the actual material was never confirmed."
+  infill_fraction:
+    value: 0.20
+    source: assumed
+    note: "Requested default; the real slicer profile is in the tnkr.ai docs, which are unreachable."
+  shell_factor:
+    value: 1.8
+    source: assumed
+    note: "Perimeters + solid top/bottom layers make a small FDM part far heavier than infill% alone implies; effective fill = min(1, infill*shell) = 0.36."
+  foot_density_g_cm3:
+    value: 1.21
+    source: assumed
+    note: "Feet printed solid in TPU (typical for a ball foot). If the foot is PLA at 20% infill it is ~2g lighter -- negligible at the shoulder."
+
+# Volumes are EXACT mesh volumes (trimesh, watertight) from the CAD STLs.
+# volume_correction scales for meshes that are visibly simplified solids.
+parts:
+  hip_bracket:
+    volume_cm3:
+      value: 9.895892
+      source: cad
+      note: "Part_1.stl, watertight, 35.9% of its bounding box => real shelled geometry."
+    volume_correction:
+      value: 1.0
+      source: assumed
+      note: "Mesh looks like true geometry, no correction needed."
+  femur:
+    volume_cm3:
+      value: 36.410280
+      source: cad
+      note: "Leg_middle_part.stl, watertight, 70 x 34 x 15.5 mm."
+    volume_correction:
+      value: 0.65
+      source: assumed
+      note: "THIS MESH IS 98.7% OF ITS BOUNDING BOX -- it is a simplified solid block with no servo pocket, so raw volume over-states the real part. 0.65 is a guess; replace from the real STEP."
+  tibia:
+    volume_cm3:
+      value: 16.273490
+      source: cad
+      note: "Part_1_1.stl, watertight, only 15.0% of its bounding box => real shelled geometry."
+    volume_correction:
+      value: 1.0
+      source: assumed
+      note: "Mesh looks like true geometry, no correction needed."
+  foot:
+    volume_cm3:
+      value: 2.559887
+      source: cad
+      note: "Foot.stl, watertight solid ball."
+    volume_correction:
+      value: 1.0
+      source: assumed
+      note: "Solid ball, no correction needed."
+
+# ---------------------------------------------------------------------
+# 3. SERVOS
+# ---------------------------------------------------------------------
+servo:
+  model:
+    value: "MIXED: SG90 yaw / MG996R pitch / MG90S knee"
+    source: spec
+    note: "Per-joint servo choice, 4.8 V column throughout. Yaw is the least-loaded joint (29%) and turns about a vertical axis, so a 9 g plastic-gear SG90 is enough. Pitch carries the whole ground reaction and STALLED on MG90S (114%), so it gets a standard-frame MG996R (bracket reprint accepted). Knee stays metal-gear MG90S because footfall impact lands there. Superseded note: quadruped-rl-locomotion-plan.pdf, which governs from Phase 0 on. THIRD spec seen for this joint: the BOM lists MG92B (13.8 g), an earlier instruction said SG90 (9 g). Stall torque is unchanged at 0.216 N.m (MG90S 2.2 kg.cm @ 6V = the same figure SG90 gives at 6V); only mass moves. Prior note: NOTE THE CONFLICT: the BOM (bom-c779bd5d-d44f-45b3-b997-64e2ec606dbb.csv) lists 12x TowerPro MG92B (13.8 g, 3.1 kg.cm), not SG90. This file is set to SG90 as instructed; swap servo.* back to MG92B to model what the BOM actually buys."
+  stall_torque_nm:
+    value: 0.9218
+    source: spec
+    note: "MG996R at 4.8 V, 9.4 kg.cm -- this is the SHOULDER servo and the plots show shoulder torque. The knee/yaw MG90S+SG90 figure is 0.1765 (see light_servo_stall_torque_nm). Superseded: Was 0.216 (the 6 V column) -- at 4.8 V the shoulder-pitch demand is 114% of this, i.e. it STALLS, which is what forces the pitch upgrade. Prior note: TowerPro's published 4.8V figure is 1.8 kg.cm = 0.176 N.m -- run at 4.8V every margin below shrinks by 18%. Drawn as the limit line on every torque plot."
+  no_load_speed_rad_s:
+    value: 6.16
+    source: spec
+    note: "MG996R 0.17 s/60deg @4.8V = 6.16 rad/s. THIS IS NOW THE GAIT-LIMITING NUMBER: the swing profile needs 4.71 rad/s per Hz at the pitch joint, capping the gait near 0.92 Hz. Superseded: SG90 0.10 s/60deg @ 6V => 10.47 rad/s. Used only for the actuator velocity sanity check."
+  mass_kg:
+    value: 0.0134
+    source: spec
+    note: "TowerPro MG90S datasheet, 13.4 g."
+  light_servo_model:
+    value: "SG90-class (plastic gear micro, 9 g)"
+    source: spec
+    note: "With SG90 everywhere there is no lighter option left, so variant C collapses onto variant A by construction. See the variants section."
+  light_servo_stall_torque_nm:
+    value: 0.1765
+    source: assumed
+    note: "Same SG90. Variant C is no longer a distinct actuator choice."
+
+  shoulder_servo_mass_kg:
+    value: 0.055
+    source: spec
+    note: "The shoulder-PITCH servo is now an MG996R (55 g). Superseded: like every other joint. The BOM's 12 servos = 3 per leg (yaw, pitch, knee), so one class throughout is right. Mounted on the hip bracket, PROXIMAL to the pitch axis, so it contributes ZERO shoulder_pitch inertia -- but it does load shoulder_yaw."
+  shoulder_servo_pos:
+    value: [0.012, 0.0, 0.008]
+    source: assumed
+    note: "Where the pitch servo sits on the hip bracket. Only its distance from the vertical yaw axis matters, and only for the yaw-torque numbers."
+  body_density_kg_m3:
+    value: 1690.0
+    source: assumed
+    note: "Bulk density of an MG90S case+gears+motor: 13.4 g / 22.8x12.2x28.5mm = 13.4 g / 7.93 cm^3 = 1690 kg/m^3. Sets the size of the cube standing in for the actuator."
+
+  # --- position-servo emulation (identical for all three variants) ---
+  # kp and kv are DERIVED from the two datasheet numbers below rather than
+  # hand-tuned, so the emulated servo cannot be quietly fudged per variant:
+  #     kp = stall_torque / proportional_band      [N.m/rad]
+  #     kv = stall_torque / no_load_speed          [N.m.s/rad]
+  # kv from that identity is exactly the back-EMF damping of a DC motor, so the
+  # model reproduces the real servo's no-load speed AND its droop under load
+  # with no free parameters.
+  proportional_band_deg:
+    value: 8.0
+    source: assumed
+    note: "Error at which a hobby servo commands full current. Typical is 5-10 deg; no control-loop data exists for this robot. Sets kp = 0.216/0.1396 = 1.55 N.m/rad."
+  armature_kg_m2:
+    value: 0.0
+    source: assumed
+    note: "Reflected gearbox inertia. SET TO ZERO ON PURPOSE so the headline result isolates link mass distribution exactly as requested. A real ~136:1 MG996R reflects an estimated 2e-4..9e-4 kg.m^2, which is COMPARABLE TO OR LARGER THAN the whole leg's pitch inertia -- run.py sweeps this and plots how much of the advantage survives."
+  armature_sweep:
+    value: [0.0, 0.0001, 0.0003, 0.0009]
+    source: assumed
+    note: "Sensitivity sweep bracketing a plausible MG996R reflected inertia."
+  joint_damping:
+    value: 0.004
+    source: assumed
+    note: "Gearbox viscous friction; no measurement available. Same for all variants."
+
+# --- electrical model for the energy metric -------------------------
+electrical:
+  supply_voltage_v:
+    value: 4.8
+    source: spec
+    note: "4.8 V IS THE STANDING INSTRUCTION: rate every servo on its 4.8 V datasheet column, always, as the conservative case. Prior note: The BOM's 4x 18650 + 4S BMS is a ~14.8 V pack, stepped down by the 2x Henge 6A UBEC -- 6.0 V is the assumed UBEC output and is inside the SG90's 4.8-6 V range."
+  torque_constant_nm_per_a:
+    value: 0.615
+    source: assumed
+    note: "Joint-referred k_t = stall torque / stall current = 0.216 N.m / 0.7 A (SG90 stall draw at 6V)."
+  winding_resistance_ohm:
+    value: 3.2
+    source: assumed
+    note: "V/I_stall = 6.0 / 0.7. Lumps motor winding + driver."
+  gearbox_efficiency:
+    value: 0.65
+    source: assumed
+    note: "Typical multi-stage spur gearbox; SG90 nylon gears are in the same band. Applied to positive mechanical power only (hobby servos do not regenerate)."
+  quiescent_current_a:
+    value: 0.01
+    source: assumed
+    note: "Idle/holding electronics draw per servo."
+
+# ---------------------------------------------------------------------
+# 4. VARIANTS -- identical kinematics, differing only in where the
+#    knee actuator's mass sits.
+# ---------------------------------------------------------------------
+variants:
+  A_baseline:
+    label: {value: "A_baseline", source: spec}
+    knee_servo_mass_kg: {value: 0.0134, source: spec, note: "MG90S, 13.4 g."}
+    knee_servo_radius_m:
+      value: null
+      source: spec
+      note: "null => distal end of the femur, i.e. r = femur_length = 48mm. Given in the request."
+    knee_servo_link: {value: "femur", source: spec}
+  # Renamed from B_coaxial. At 30 mm the servo is still bolted to the thigh and
+  # there is no pushrod, so "coaxial" would have been a wrong label on every
+  # plot legend. Set knee_servo_radius_m back to 0.015 to restore the original
+  # coaxial variant.
+  B_inboard:
+    label: {value: "B_inboard", source: spec}
+    knee_servo_mass_kg: {value: 0.0134, source: spec, note: "Same MG90S as the baseline, just moved inboard."}
+    knee_servo_radius_m:
+      value: 0.030
+      source: spec
+      note: "Set to 30 mm on request. Still a plain serial chain -- no linkage modelled. From the radius sweep this captures ~67% of what a full 15 mm coaxial pushrod would buy, for a different hole pattern in the thigh rather than a new mechanism."
+    knee_servo_link:
+      value: "femur"
+      source: spec
+      note: "Bolted to the femur, so it rotates with pitch and still contributes m*r^2. (Set to 'hip' to model a servo mounted on the hip bracket instead, which would contribute ZERO pitch inertia -- the optimistic pushrod bound.)"
+  C_lightknee:
+    label: {value: "C_lightknee", source: spec}
+    knee_servo_mass_kg: {value: 0.0134, source: spec, note: "DEGENERATE: with MG90S everywhere this equals variant A exactly. Kept so the run still reports three columns; A and C should now agree to numerical noise."}
+    knee_servo_radius_m: {value: null, source: spec, note: "Stays distal. Given in the request."}
+    knee_servo_link: {value: "femur", source: spec}
+
+# ---------------------------------------------------------------------
+# 5. TRIALS
+# ---------------------------------------------------------------------
+sim:
+  timestep:
+    value: 0.0001
+    source: assumed
+    note: "10 kHz. The stiffest pole in the system is the servo's velocity feedback, kv/I; with armature=0 and the lightest variant that is ~1120 rad/s, so dt*pole = 0.11 and the integration is comfortably stable."
+  integrator:
+    value: "implicit"
+    source: assumed
+    note: "Integrates the actuator's velocity-dependent force implicitly. implicitfast chatters into saturation here because the leg's inertia is so small (1e-4 kg.m^2) that kv/I is a very fast pole."
+
+trials:
+  swing:
+    frequencies_hz:
+      value: [1.0, 2.0, 4.0]
+      source: spec
+      note: "Given in the request."
+    cycles:
+      value: 4
+      source: assumed
+      note: "First cycle discarded as transient; peak/RMS taken over the remaining steady cycles."
+    step_length:
+      value: 0.070
+      source: cad
+      note: "From points/animation.py: oneStep=35mm and the walk targets span 0..3*oneStep; 2*oneStep = 70mm is the per-cycle foot excursion."
+    step_height:
+      value: 0.030
+      source: cad
+      note: "From points/animation.py: the swing waypoints raise the foot by kY=50mm in leg-local units; 30mm is the conservative clearance actually traced."
+  stance:
+    body_mass_kg:
+      value: 0.892
+      source: cad
+      note: "DERIVED FROM THE BOM (bom-c779bd5d-d44f-45b3-b997-64e2ec606dbb.csv) PLUS THE PRINTED CHASSIS. BOM electronics + fasteners = 678.5 g (servos are now mixed: 4x SG90 yaw @ 9 g + 4x MG996R pitch @ 55 g + 4x MG90S knee @ 13.4 g = 309.6 g; 4x 18650 @ 47 g = 188 g; RPi 5 46 g; the rest boards, wiring, connectors and 50 screws). Chassis = 213.2 g, computed from the CAD mesh volumes at PLA 1.24 g/cm3 and effective fill 0.36, with the same 0.65 volume_correction the femur uses applied to Bottom_case (it is a 99.9%-of-bbox solid block). Total 891.7 g. The old 1.8 kg was a bare assertion and overstated the machine by 2.4x."
+    support_legs:
+      value: 3
+      source: spec
+      note: "Three-leg support, worst case. run.py solves the statically-determinate tripod for the WORST-LOADED leg rather than assuming W/3."
+    squat_range:
+      value: [-0.020, 0.020]
+      source: assumed
+      note: "+/-20mm about the neutral body height. Neutral foot drop is 71.3mm, so this is a realistic squat without hitting the singular/folded ends."
+    squat_period_s:
+      value: 4.0
+      source: assumed
+      note: "Slow enough to be quasi-static, so the reading is the true static shoulder load."
+    hold_time_s:
+      value: 1.0
+      source: assumed
+      note: "Settling window before the pose-hold torque is read."
+  settling:
+    step_m:
+      value: 0.020
+      source: assumed
+      note: "20mm foot step -- large enough to be well outside sensor noise, small enough to stay inside the servo's linear band."
+    band_fraction:
+      value: 0.02
+      source: assumed
+      note: "Standard 2% settling-time definition."
+    duration_s:
+      value: 1.5
+      source: assumed
+      note: "Long enough to capture a settle plus margin."
+  # "What if I just slide the knee servo inboard along the thigh, without
+  # building a pushrod at all?" -- sweep the mounting radius on the femur.
+  radius_sweep:
+    radii_m:
+      value: [0.015, 0.020, 0.025, 0.030, 0.035, 0.040, 0.044, 0.048]
+      source: assumed
+      note: "Spans variant B's 15mm coaxial position to variant A's 48mm distal position. The low end is bounded by the servo body itself: a 55 g servo is ~33mm across, so its centre cannot get much closer than ~17mm to the pitch axis without fouling the shoulder."
+    masses_kg:
+      value: [0.0134, 0.009]
+      source: spec
+      note: "MG90S (13.4 g, the plan's servo) vs a hypothetical 9 g SG90, swept over the same radii."
+  energy:
+    duty_factor:
+      value: 0.5
+      source: assumed
+      note: "Trot-like 50% duty: half the cycle swinging, half in loaded stance."
+
+# ---------------------------------------------------------------------
+# 6. STAIR CLIMB -- whole-robot, 12 DOF, quasi-static joint loads
+# ---------------------------------------------------------------------
+stairs:
+  height_multiple:
+    value: 1.15
+    source: spec
+    note: "Step height as a multiple of the robot's own standing height (144.2 mm, derived from CAD) -- 'a bit larger than its own height', per the request. 1.15 => 166 mm."
+  step_depth_m:
+    value: 0.30
+    source: assumed
+    note: "Tread depth. Only has to be deep enough to stand all four feet on; a normal building tread is 250-300 mm."
+  friction_mu:
+    value: 0.8
+    source: assumed
+    note: "Rubber/TPU ball foot on a hard tread. Enters the load solve as a linearised friction cone -- a pitched body needs real tangential force, and too low a mu makes the climb infeasible rather than merely hard."
+  foot_clearance_m:
+    value: 0.020
+    source: assumed
+    note: "Height the swinging foot clears the step edge by."
+  landing_margin_m:
+    value: 0.045
+    source: assumed
+    note: "How far past the step edge a foot is planted. Too close and the foot risks the edge; too far and the body cannot follow."
+
+  # --- the two strategies being compared -----------------------------
+  naive_stance:
+    value: null
+    source: assumed
+    note: "NAIVE = the robot's own neutral splayed footprint (feet at x=+/-41 mm, y=+/-119 mm) with the body held level. Uses the 3 DOF of each leg but none of the whole-body freedom."
+  smart_front_foot:
+    value: [0.115, 0.075]
+    source: assumed
+    note: "SMART stance: [x, |y|] of the FRONT footholds in the body frame, reached by yawing the legs forward. Turns the 82 mm fore-aft footprint into 230 mm. Bounded by leg reach, not by the yaw stops."
+  smart_rear_foot:
+    value: [-0.115, 0.075]
+    source: assumed
+    note: "SMART stance: [x, |y|] of the REAR footholds. Symmetric with the front."
+
+  samples_per_phase:
+    value: 7
+    source: assumed
+    note: "Quasi-static samples per climb phase. Loads are static, so this only sets curve resolution."
+  body_pitch_limit_deg:
+    value: 45.0
+    source: assumed
+    note: "Cap on commanded nose-up body pitch during the haul. Beyond this the trunk fouls the step face in reality, which this quasi-static model would not otherwise notice."
+  height_sweep_m:
+    value: [0.05, 0.07, 0.09, 0.11, 0.13, 0.15, 0.166, 0.18, 0.20]
+    source: assumed
+    note: "Step heights tested to find where each strategy stops being able to climb."
+
+output:
+  results_dir: {value: "results", source: assumed, note: "Output location."}
+  palette:
+    value: ["#2a78d6", "#eb6834", "#1baf7a"]
+    source: assumed
+    note: "Validated categorical palette (all-pairs CVD dE 9.2, normal-vision dE 24.0, light surface)."

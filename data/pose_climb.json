@@ -1,0 +1,44 @@
+{
+ "note": "front-left foot planted on the 144 mm wall; rear legs folded, weight shifted back",
+ "source": "live sim, parked from take_144mm.json, all joints MG92B",
+ "wall_m": 0.1442,
+ "robot_g": 892.0,
+ "body": {
+  "z_mm": 142.02375951993142,
+  "pitch_deg": -24.240357061599678,
+  "feet_in_contact": 4
+ },
+ "torque_pct_of_stall": {
+  "yaw": 43.17184897908688,
+  "pitch": 28.280936250056744,
+  "knee": 98.14354193197138
+ },
+ "angles_deg": {
+  "FL_yaw": -1.6613591201333513,
+  "FL_pitch": -6.86040776062495,
+  "FL_knee": -40.55892581828866,
+  "FR_yaw": 41.076195071353354,
+  "FR_pitch": -2.0792228294334674,
+  "FR_knee": -44.10234945635954,
+  "BL_yaw": 31.188088818956004,
+  "BL_pitch": -2.1320235957899683,
+  "BL_knee": -28.69217007331345,
+  "BR_yaw": -27.99459798294555,
+  "BR_pitch": -6.540495279548262,
+  "BR_knee": -30.315944369066727
+ },
+ "commanded_deg": {
+  "FL_yaw": 0.0,
+  "FL_pitch": 0.0,
+  "FL_knee": -36.0,
+  "FR_yaw": 41.0,
+  "FR_pitch": 1.0,
+  "FR_knee": -42.0,
+  "BL_yaw": 32.0,
+  "BL_pitch": 0.0,
+  "BL_knee": -28.0,
+  "BR_yaw": -30.0,
+  "BR_pitch": 0.0,
+  "BR_knee": -28.0
+ }
+}
