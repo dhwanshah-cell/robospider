@@ -1,0 +1,395 @@
+<?xml version="1.0"?>
+<robot name="cubebot">
+  <!--
+  CubeBot 12-DOF quadruped — generated from the validated MuJoCo model.
+  Masses and inertia tensors are REAL (BOM components + CAD volumes),
+  unlike the original Onshape URDF export where every <mass> was the mesh
+  volume in m^3 (unit density: whole robot = 1.06 g).
+  Geometry is primitives, so no mesh files are required.
+-->
+  <link name="trunk">
+    <inertial>
+      <origin xyz="-0.00447377 0.000204821 -0.00986828" rpy="-1.85233 -1.53107 -1.27366" />
+      <mass value="0.6347" />
+      <inertia ixx="0.00100791" iyy="0.000924149" izz="0.00072202" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <collision name="trunk_col">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.125 0.105 0.0824" />
+      </geometry>
+    </collision>
+  </link>
+  <link name="FL_hip">
+    <inertial>
+      <origin xyz="0.0120863 0.0014668 0.0072666" rpy="1.72203 -0.353429 1.59707" />
+      <mass value="0.010877" />
+      <inertia ixx="1.08799e-06" iyy="9.16316e-07" izz="8.82159e-07" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <collision name="FL_hipbr_col">
+      <origin xyz="0.0125 0.0085 0.00375" rpy="0 0 0" />
+      <geometry>
+        <box size="0.046 0.015 0.04" />
+      </geometry>
+    </collision>
+    <visual name="FL_hipbr_vis">
+      <origin xyz="0.0125 0.0085 0.00375" rpy="0 0 0" />
+      <geometry>
+        <box size="0.046 0.015 0.04" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="FL_femur">
+    <inertial>
+      <origin xyz="0.0409163 0 0" rpy="1.5708 0 1.5708" />
+      <mass value="0.0127687" />
+      <inertia ixx="3.41264e-06" iyy="3.41264e-06" izz="7.0479e-07" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <collision name="FL_femur_col">
+      <origin xyz="0.024 0 0" rpy="0 -1.5708 0" />
+      <geometry>
+        <cylinder radius="0.01175" length="0.048" />
+      </geometry>
+    </collision>
+    <visual name="FL_femur_vis">
+      <origin xyz="0.024 0 0" rpy="0 -1.5708 0" />
+      <geometry>
+        <cylinder radius="0.01175" length="0.048" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="FL_tibia">
+    <inertial>
+      <origin xyz="0 0.017 -0.0521092" rpy="0 0 0" />
+      <mass value="0.00559622" />
+      <inertia ixx="4.50829e-06" iyy="4.50829e-06" izz="1.56389e-07" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <collision name="FL_tibia_col">
+      <origin xyz="0 0.017 -0.039412" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.0075" length="0.0788241" />
+      </geometry>
+    </collision>
+    <visual name="FL_tibia_vis">
+      <origin xyz="0 0.017 -0.039412" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.0075" length="0.0788241" />
+      </geometry>
+    </visual>
+    <collision name="FL_foot_col">
+      <origin xyz="0 0.017 -0.0788241" rpy="0 0 0" />
+      <geometry>
+        <sphere radius="0.0085" />
+      </geometry>
+    </collision>
+    <visual name="FL_foot_vis">
+      <origin xyz="0 0.017 -0.0788241" rpy="0 0 0" />
+      <geometry>
+        <sphere radius="0.0085" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="FR_hip">
+    <inertial>
+      <origin xyz="0.0120863 0.0014668 0.0072666" rpy="1.72203 -0.353429 1.59707" />
+      <mass value="0.010877" />
+      <inertia ixx="1.08799e-06" iyy="9.16316e-07" izz="8.82159e-07" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <collision name="FR_hipbr_col">
+      <origin xyz="0.0125 0.0085 0.00375" rpy="0 0 0" />
+      <geometry>
+        <box size="0.046 0.015 0.04" />
+      </geometry>
+    </collision>
+    <visual name="FR_hipbr_vis">
+      <origin xyz="0.0125 0.0085 0.00375" rpy="0 0 0" />
+      <geometry>
+        <box size="0.046 0.015 0.04" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="FR_femur">
+    <inertial>
+      <origin xyz="0.0409163 0 0" rpy="1.5708 0 1.5708" />
+      <mass value="0.0127687" />
+      <inertia ixx="3.41264e-06" iyy="3.41264e-06" izz="7.0479e-07" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <collision name="FR_femur_col">
+      <origin xyz="0.024 0 0" rpy="0 -1.5708 0" />
+      <geometry>
+        <cylinder radius="0.01175" length="0.048" />
+      </geometry>
+    </collision>
+    <visual name="FR_femur_vis">
+      <origin xyz="0.024 0 0" rpy="0 -1.5708 0" />
+      <geometry>
+        <cylinder radius="0.01175" length="0.048" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="FR_tibia">
+    <inertial>
+      <origin xyz="0 -0.017 -0.0521092" rpy="0 0 0" />
+      <mass value="0.00559622" />
+      <inertia ixx="4.50829e-06" iyy="4.50829e-06" izz="1.56389e-07" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <collision name="FR_tibia_col">
+      <origin xyz="0 -0.017 -0.039412" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.0075" length="0.0788241" />
+      </geometry>
+    </collision>
+    <visual name="FR_tibia_vis">
+      <origin xyz="0 -0.017 -0.039412" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.0075" length="0.0788241" />
+      </geometry>
+    </visual>
+    <collision name="FR_foot_col">
+      <origin xyz="0 -0.017 -0.0788241" rpy="0 0 0" />
+      <geometry>
+        <sphere radius="0.0085" />
+      </geometry>
+    </collision>
+    <visual name="FR_foot_vis">
+      <origin xyz="0 -0.017 -0.0788241" rpy="0 0 0" />
+      <geometry>
+        <sphere radius="0.0085" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="BL_hip">
+    <inertial>
+      <origin xyz="0.0120863 0.0014668 0.0072666" rpy="1.72203 -0.353429 1.59707" />
+      <mass value="0.010877" />
+      <inertia ixx="1.08799e-06" iyy="9.16316e-07" izz="8.82159e-07" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <collision name="BL_hipbr_col">
+      <origin xyz="0.0125 0.0085 0.00375" rpy="0 0 0" />
+      <geometry>
+        <box size="0.046 0.015 0.04" />
+      </geometry>
+    </collision>
+    <visual name="BL_hipbr_vis">
+      <origin xyz="0.0125 0.0085 0.00375" rpy="0 0 0" />
+      <geometry>
+        <box size="0.046 0.015 0.04" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="BL_femur">
+    <inertial>
+      <origin xyz="0.0409163 0 0" rpy="1.5708 0 1.5708" />
+      <mass value="0.0127687" />
+      <inertia ixx="3.41264e-06" iyy="3.41264e-06" izz="7.0479e-07" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <collision name="BL_femur_col">
+      <origin xyz="0.024 0 0" rpy="0 -1.5708 0" />
+      <geometry>
+        <cylinder radius="0.01175" length="0.048" />
+      </geometry>
+    </collision>
+    <visual name="BL_femur_vis">
+      <origin xyz="0.024 0 0" rpy="0 -1.5708 0" />
+      <geometry>
+        <cylinder radius="0.01175" length="0.048" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="BL_tibia">
+    <inertial>
+      <origin xyz="0 0.017 -0.0521092" rpy="0 0 0" />
+      <mass value="0.00559622" />
+      <inertia ixx="4.50829e-06" iyy="4.50829e-06" izz="1.56389e-07" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <collision name="BL_tibia_col">
+      <origin xyz="0 0.017 -0.039412" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.0075" length="0.0788241" />
+      </geometry>
+    </collision>
+    <visual name="BL_tibia_vis">
+      <origin xyz="0 0.017 -0.039412" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.0075" length="0.0788241" />
+      </geometry>
+    </visual>
+    <collision name="BL_foot_col">
+      <origin xyz="0 0.017 -0.0788241" rpy="0 0 0" />
+      <geometry>
+        <sphere radius="0.0085" />
+      </geometry>
+    </collision>
+    <visual name="BL_foot_vis">
+      <origin xyz="0 0.017 -0.0788241" rpy="0 0 0" />
+      <geometry>
+        <sphere radius="0.0085" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="BR_hip">
+    <inertial>
+      <origin xyz="0.0120863 0.0014668 0.0072666" rpy="1.72203 -0.353429 1.59707" />
+      <mass value="0.010877" />
+      <inertia ixx="1.08799e-06" iyy="9.16316e-07" izz="8.82159e-07" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <collision name="BR_hipbr_col">
+      <origin xyz="0.0125 0.0085 0.00375" rpy="0 0 0" />
+      <geometry>
+        <box size="0.046 0.015 0.04" />
+      </geometry>
+    </collision>
+    <visual name="BR_hipbr_vis">
+      <origin xyz="0.0125 0.0085 0.00375" rpy="0 0 0" />
+      <geometry>
+        <box size="0.046 0.015 0.04" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="BR_femur">
+    <inertial>
+      <origin xyz="0.0409163 0 0" rpy="1.5708 0 1.5708" />
+      <mass value="0.0127687" />
+      <inertia ixx="3.41264e-06" iyy="3.41264e-06" izz="7.0479e-07" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <collision name="BR_femur_col">
+      <origin xyz="0.024 0 0" rpy="0 -1.5708 0" />
+      <geometry>
+        <cylinder radius="0.01175" length="0.048" />
+      </geometry>
+    </collision>
+    <visual name="BR_femur_vis">
+      <origin xyz="0.024 0 0" rpy="0 -1.5708 0" />
+      <geometry>
+        <cylinder radius="0.01175" length="0.048" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="BR_tibia">
+    <inertial>
+      <origin xyz="0 -0.017 -0.0521092" rpy="0 0 0" />
+      <mass value="0.00559622" />
+      <inertia ixx="4.50829e-06" iyy="4.50829e-06" izz="1.56389e-07" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    <collision name="BR_tibia_col">
+      <origin xyz="0 -0.017 -0.039412" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.0075" length="0.0788241" />
+      </geometry>
+    </collision>
+    <visual name="BR_tibia_vis">
+      <origin xyz="0 -0.017 -0.039412" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.0075" length="0.0788241" />
+      </geometry>
+    </visual>
+    <collision name="BR_foot_col">
+      <origin xyz="0 -0.017 -0.0788241" rpy="0 0 0" />
+      <geometry>
+        <sphere radius="0.0085" />
+      </geometry>
+    </collision>
+    <visual name="BR_foot_vis">
+      <origin xyz="0 -0.017 -0.0788241" rpy="0 0 0" />
+      <geometry>
+        <sphere radius="0.0085" />
+      </geometry>
+    </visual>
+  </link>
+  <joint name="FL_yaw" type="revolute">
+    <parent link="trunk" />
+    <child link="FL_hip" />
+    <origin xyz="0.0465 0.0385 -0.0232" rpy="0 0 0.415844" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.6" upper="1.6" effort="0.17652" velocity="10.47" />
+    <dynamics damping="0.004" friction="0" />
+  </joint>
+  <joint name="FL_pitch" type="revolute">
+    <parent link="FL_hip" />
+    <child link="FL_femur" />
+    <origin xyz="0.025 0.017 0.0075" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="-1.4" upper="1.4" effort="0.245166" velocity="10.47" />
+    <dynamics damping="0.004" friction="0" />
+  </joint>
+  <joint name="FL_knee" type="revolute">
+    <parent link="FL_femur" />
+    <child link="FL_tibia" />
+    <origin xyz="0.048 0 0" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="-2.2" upper="2.2" effort="0.245166" velocity="10.47" />
+    <dynamics damping="0.004" friction="0" />
+  </joint>
+  <joint name="FR_yaw" type="revolute">
+    <parent link="trunk" />
+    <child link="FR_hip" />
+    <origin xyz="0.0465 -0.0385 -0.0232" rpy="0 0 -0.415844" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.6" upper="1.6" effort="0.17652" velocity="10.47" />
+    <dynamics damping="0.004" friction="0" />
+  </joint>
+  <joint name="FR_pitch" type="revolute">
+    <parent link="FR_hip" />
+    <child link="FR_femur" />
+    <origin xyz="0.025 -0.017 0.0075" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="-1.4" upper="1.4" effort="0.245166" velocity="10.47" />
+    <dynamics damping="0.004" friction="0" />
+  </joint>
+  <joint name="FR_knee" type="revolute">
+    <parent link="FR_femur" />
+    <child link="FR_tibia" />
+    <origin xyz="0.048 0 0" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="-2.2" upper="2.2" effort="0.245166" velocity="10.47" />
+    <dynamics damping="0.004" friction="0" />
+  </joint>
+  <joint name="BL_yaw" type="revolute">
+    <parent link="trunk" />
+    <child link="BL_hip" />
+    <origin xyz="-0.0465 0.0385 -0.0232" rpy="0 0 1.854" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.6" upper="1.6" effort="0.17652" velocity="10.47" />
+    <dynamics damping="0.004" friction="0" />
+  </joint>
+  <joint name="BL_pitch" type="revolute">
+    <parent link="BL_hip" />
+    <child link="BL_femur" />
+    <origin xyz="0.025 0.017 0.0075" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="-1.4" upper="1.4" effort="0.245166" velocity="10.47" />
+    <dynamics damping="0.004" friction="0" />
+  </joint>
+  <joint name="BL_knee" type="revolute">
+    <parent link="BL_femur" />
+    <child link="BL_tibia" />
+    <origin xyz="0.048 0 0" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="-2.2" upper="2.2" effort="0.245166" velocity="10.47" />
+    <dynamics damping="0.004" friction="0" />
+  </joint>
+  <joint name="BR_yaw" type="revolute">
+    <parent link="trunk" />
+    <child link="BR_hip" />
+    <origin xyz="-0.0465 -0.0385 -0.0232" rpy="0 0 -1.854" />
+    <axis xyz="0 0 1" />
+    <limit lower="-1.6" upper="1.6" effort="0.17652" velocity="10.47" />
+    <dynamics damping="0.004" friction="0" />
+  </joint>
+  <joint name="BR_pitch" type="revolute">
+    <parent link="BR_hip" />
+    <child link="BR_femur" />
+    <origin xyz="0.025 -0.017 0.0075" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="-1.4" upper="1.4" effort="0.245166" velocity="10.47" />
+    <dynamics damping="0.004" friction="0" />
+  </joint>
+  <joint name="BR_knee" type="revolute">
+    <parent link="BR_femur" />
+    <child link="BR_tibia" />
+    <origin xyz="0.048 0 0" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="-2.2" upper="2.2" effort="0.245166" velocity="10.47" />
+    <dynamics damping="0.004" friction="0" />
+  </joint>
+</robot>

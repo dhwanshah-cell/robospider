@@ -1,0 +1,36 @@
+{
+ "note": "carried across the readout fix",
+ "body": {
+  "z_mm": 139.11040288866425,
+  "pitch_deg": 6.267896342846498,
+  "feet_in_contact": 4
+ },
+ "angles_deg": {
+  "FL_yaw": -29.69567740234349,
+  "FL_pitch": -68.64501465881557,
+  "FL_knee": -23.35893765010555,
+  "FR_yaw": 90.14908657957149,
+  "FR_pitch": 32.27117620498901,
+  "FR_knee": -33.137197644453416,
+  "BL_yaw": 0.10836766808400458,
+  "BL_pitch": 79.53849271037107,
+  "BL_knee": -80.40347983659282,
+  "BR_yaw": -0.44052755797030474,
+  "BR_pitch": 78.33977064649835,
+  "BR_knee": -80.85415684755822
+ },
+ "commanded_deg": {
+  "FL_yaw": -30.0,
+  "FL_pitch": -52.0,
+  "FL_knee": -17.0,
+  "FR_yaw": 90.0,
+  "FR_pitch": 33.2,
+  "FR_knee": -33.2,
+  "BL_yaw": 0.0,
+  "BL_pitch": 80.2,
+  "BL_knee": -80.2,
+  "BR_yaw": 0.0,
+  "BR_pitch": 80.2,
+  "BR_knee": -80.2
+ }
+}

@@ -1,0 +1,185 @@
+<mujoco model="cubebot_12dof">
+  <!--
+  CubeBot - 12-DOF sprawled quadruped, MuJoCo model.
+  Self-contained: primitive geoms only, no mesh files required.
+
+  Servos, rated at 4.8 V:
+    yaw          TowerPro SG90    1.8 kg.cm  0.10 s/60deg
+    pitch, knee  TowerPro SG92R   2.5 kg.cm  0.10 s/60deg
+
+  Position actuators: kp = stall/8deg, kv = stall/no_load_speed,
+  forcerange clamped at stall. 2 ms timestep, implicitfast (MJX compatible).
+  Trunk inertia is a 30-component mass model, not a uniform box.
+-->
+  <compiler angle="radian" autolimits="true" />
+  <option timestep="0.002" integrator="implicitfast" solver="Newton" iterations="4" ls_iterations="8" />
+  <default>
+    <joint armature="0" damping="0.004" />
+    <position kp="6.60190619" kv="0.149642857" forcerange="-0.9218 0.9218" />
+    <geom friction="0.8 0.02 0.001" condim="3" solref="0.008 1" />
+  </default>
+  <worldbody>
+    <light pos="0 0 1.5" dir="0 0 -1" directional="true" />
+    <geom name="floor" type="plane" size="3 3 0.05" rgba="0.86 0.86 0.84 1" />
+    <body name="trunk" pos="0 0 0.1030241">
+      <inertial pos="-0.00447376713 0.000204821175 -0.00986828423" mass="0.6347" fullinertia="0.000722105987 0.000924219618 0.00100775143 -3.23158973e-06 3.20299307e-06 -3.14287695e-06" />
+      <freejoint name="root" />
+      <geom name="trunk_col" type="box" size="0.0625 0.0525 0.0412" mass="0" contype="1" conaffinity="1" rgba="0.62 0.81 0.93 0.5" />
+      <body name="FL_hip" pos="0.0465 0.0385 -0.0232" euler="0 0 0.415843703">
+        <joint name="FL_yaw" type="hinge" axis="0 0 1" range="-1.6 1.6" />
+        <geom mass="0.00187698" type="box" size="0.023 0.0075 0.02" pos="0.0125 0.0085 0.00375" name="FL_hipbr_col" group="3" rgba="0.5 0.5 0.5 0.3" />
+        <geom type="box" size="0.023 0.0075 0.02" pos="0.0125 0.0085 0.00375" name="FL_hipbr_vis" group="2" rgba="0.62 0.81 0.93 1" contype="0" conaffinity="0" mass="0" />
+        <geom name="FL_pitchservo" type="box" size="0.00873149493 0.00873149493 0.00873149493" pos="0.012 0 0.008" mass="0.009" contype="0" conaffinity="0" rgba="0.45 0.45 0.45 1" />
+        <body name="FL_femur" pos="0.025 0.017 0.0075">
+          <joint name="FL_pitch" type="hinge" axis="0 1 0" range="-1.4 1.4" />
+          <geom mass="0.00376872" type="capsule" size="0.01175" fromto="0 0 0 0.048 0 0" name="FL_femur_col" group="3" rgba="0.5 0.5 0.5 0.3" />
+          <geom type="capsule" size="0.01175" fromto="0 0 0 0.048 0 0" name="FL_femur_vis" group="2" rgba="0.62 0.81 0.93 1" contype="0" conaffinity="0" mass="0" />
+          <geom name="FL_kneeservo" type="box" size="0.00873149493 0.00873149493 0.00873149493" pos="0.048 0 0" mass="0.009" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 1" />
+          <body name="FL_tibia" pos="0.048 0 0">
+            <joint name="FL_knee" type="hinge" axis="0 1 0" range="-2.2 2.2" />
+            <geom mass="0.00379332" type="capsule" size="0.0075" fromto="0 0.017 0 0 0.017 -0.0788241" name="FL_tibia_col" group="3" rgba="0.5 0.5 0.5 0.3" />
+            <geom type="capsule" size="0.0075" fromto="0 0.017 0 0 0.017 -0.0788241" name="FL_tibia_vis" group="2" rgba="0.62 0.81 0.93 1" contype="0" conaffinity="0" mass="0" />
+            <geom mass="0.0018029" type="sphere" size="0.0085" pos="0 0.017 -0.0788241" name="FL_foot_col" group="3" rgba="0.5 0.5 0.5 0.3" />
+            <geom type="sphere" size="0.0085" pos="0 0.017 -0.0788241" name="FL_foot_vis" group="2" rgba="0.35 0.35 0.35 1" contype="0" conaffinity="0" mass="0" />
+            <site name="FL_foot_site" pos="0 0.017 -0.0788241" size="0.0095" rgba="1 0 0 1" />
+          </body>
+        </body>
+      </body>
+      <body name="FR_hip" pos="0.0465 -0.0385 -0.0232" euler="0 0 -0.415843703">
+        <joint name="FR_yaw" type="hinge" axis="0 0 1" range="-1.6 1.6" />
+        <geom mass="0.00187698" type="box" size="0.023 0.0075 0.02" pos="0.0125 0.0085 0.00375" name="FR_hipbr_col" group="3" rgba="0.5 0.5 0.5 0.3" />
+        <geom type="box" size="0.023 0.0075 0.02" pos="0.0125 0.0085 0.00375" name="FR_hipbr_vis" group="2" rgba="0.62 0.81 0.93 1" contype="0" conaffinity="0" mass="0" />
+        <geom name="FR_pitchservo" type="box" size="0.00873149493 0.00873149493 0.00873149493" pos="0.012 0 0.008" mass="0.009" contype="0" conaffinity="0" rgba="0.45 0.45 0.45 1" />
+        <body name="FR_femur" pos="0.025 -0.017 0.0075">
+          <joint name="FR_pitch" type="hinge" axis="0 1 0" range="-1.4 1.4" />
+          <geom mass="0.00376872" type="capsule" size="0.01175" fromto="0 0 0 0.048 0 0" name="FR_femur_col" group="3" rgba="0.5 0.5 0.5 0.3" />
+          <geom type="capsule" size="0.01175" fromto="0 0 0 0.048 0 0" name="FR_femur_vis" group="2" rgba="0.62 0.81 0.93 1" contype="0" conaffinity="0" mass="0" />
+          <geom name="FR_kneeservo" type="box" size="0.00873149493 0.00873149493 0.00873149493" pos="0.048 0 0" mass="0.009" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 1" />
+          <body name="FR_tibia" pos="0.048 0 0">
+            <joint name="FR_knee" type="hinge" axis="0 1 0" range="-2.2 2.2" />
+            <geom mass="0.00379332" type="capsule" size="0.0075" fromto="0 -0.017 0 0 -0.017 -0.0788241" name="FR_tibia_col" group="3" rgba="0.5 0.5 0.5 0.3" />
+            <geom type="capsule" size="0.0075" fromto="0 -0.017 0 0 -0.017 -0.0788241" name="FR_tibia_vis" group="2" rgba="0.62 0.81 0.93 1" contype="0" conaffinity="0" mass="0" />
+            <geom mass="0.0018029" type="sphere" size="0.0085" pos="0 -0.017 -0.0788241" name="FR_foot_col" group="3" rgba="0.5 0.5 0.5 0.3" />
+            <geom type="sphere" size="0.0085" pos="0 -0.017 -0.0788241" name="FR_foot_vis" group="2" rgba="0.35 0.35 0.35 1" contype="0" conaffinity="0" mass="0" />
+            <site name="FR_foot_site" pos="0 -0.017 -0.0788241" size="0.0095" rgba="1 0 0 1" />
+          </body>
+        </body>
+      </body>
+      <body name="BL_hip" pos="-0.0465 0.0385 -0.0232" euler="0 0 1.85399501">
+        <joint name="BL_yaw" type="hinge" axis="0 0 1" range="-1.6 1.6" />
+        <geom mass="0.00187698" type="box" size="0.023 0.0075 0.02" pos="0.0125 0.0085 0.00375" name="BL_hipbr_col" group="3" rgba="0.5 0.5 0.5 0.3" />
+        <geom type="box" size="0.023 0.0075 0.02" pos="0.0125 0.0085 0.00375" name="BL_hipbr_vis" group="2" rgba="0.62 0.81 0.93 1" contype="0" conaffinity="0" mass="0" />
+        <geom name="BL_pitchservo" type="box" size="0.00873149493 0.00873149493 0.00873149493" pos="0.012 0 0.008" mass="0.009" contype="0" conaffinity="0" rgba="0.45 0.45 0.45 1" />
+        <body name="BL_femur" pos="0.025 0.017 0.0075">
+          <joint name="BL_pitch" type="hinge" axis="0 1 0" range="-1.4 1.4" />
+          <geom mass="0.00376872" type="capsule" size="0.01175" fromto="0 0 0 0.048 0 0" name="BL_femur_col" group="3" rgba="0.5 0.5 0.5 0.3" />
+          <geom type="capsule" size="0.01175" fromto="0 0 0 0.048 0 0" name="BL_femur_vis" group="2" rgba="0.62 0.81 0.93 1" contype="0" conaffinity="0" mass="0" />
+          <geom name="BL_kneeservo" type="box" size="0.00873149493 0.00873149493 0.00873149493" pos="0.048 0 0" mass="0.009" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 1" />
+          <body name="BL_tibia" pos="0.048 0 0">
+            <joint name="BL_knee" type="hinge" axis="0 1 0" range="-2.2 2.2" />
+            <geom mass="0.00379332" type="capsule" size="0.0075" fromto="0 0.017 0 0 0.017 -0.0788241" name="BL_tibia_col" group="3" rgba="0.5 0.5 0.5 0.3" />
+            <geom type="capsule" size="0.0075" fromto="0 0.017 0 0 0.017 -0.0788241" name="BL_tibia_vis" group="2" rgba="0.62 0.81 0.93 1" contype="0" conaffinity="0" mass="0" />
+            <geom mass="0.0018029" type="sphere" size="0.0085" pos="0 0.017 -0.0788241" name="BL_foot_col" group="3" rgba="0.5 0.5 0.5 0.3" />
+            <geom type="sphere" size="0.0085" pos="0 0.017 -0.0788241" name="BL_foot_vis" group="2" rgba="0.35 0.35 0.35 1" contype="0" conaffinity="0" mass="0" />
+            <site name="BL_foot_site" pos="0 0.017 -0.0788241" size="0.0095" rgba="1 0 0 1" />
+          </body>
+        </body>
+      </body>
+      <body name="BR_hip" pos="-0.0465 -0.0385 -0.0232" euler="0 0 -1.85399501">
+        <joint name="BR_yaw" type="hinge" axis="0 0 1" range="-1.6 1.6" />
+        <geom mass="0.00187698" type="box" size="0.023 0.0075 0.02" pos="0.0125 0.0085 0.00375" name="BR_hipbr_col" group="3" rgba="0.5 0.5 0.5 0.3" />
+        <geom type="box" size="0.023 0.0075 0.02" pos="0.0125 0.0085 0.00375" name="BR_hipbr_vis" group="2" rgba="0.62 0.81 0.93 1" contype="0" conaffinity="0" mass="0" />
+        <geom name="BR_pitchservo" type="box" size="0.00873149493 0.00873149493 0.00873149493" pos="0.012 0 0.008" mass="0.009" contype="0" conaffinity="0" rgba="0.45 0.45 0.45 1" />
+        <body name="BR_femur" pos="0.025 -0.017 0.0075">
+          <joint name="BR_pitch" type="hinge" axis="0 1 0" range="-1.4 1.4" />
+          <geom mass="0.00376872" type="capsule" size="0.01175" fromto="0 0 0 0.048 0 0" name="BR_femur_col" group="3" rgba="0.5 0.5 0.5 0.3" />
+          <geom type="capsule" size="0.01175" fromto="0 0 0 0.048 0 0" name="BR_femur_vis" group="2" rgba="0.62 0.81 0.93 1" contype="0" conaffinity="0" mass="0" />
+          <geom name="BR_kneeservo" type="box" size="0.00873149493 0.00873149493 0.00873149493" pos="0.048 0 0" mass="0.009" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 1" />
+          <body name="BR_tibia" pos="0.048 0 0">
+            <joint name="BR_knee" type="hinge" axis="0 1 0" range="-2.2 2.2" />
+            <geom mass="0.00379332" type="capsule" size="0.0075" fromto="0 -0.017 0 0 -0.017 -0.0788241" name="BR_tibia_col" group="3" rgba="0.5 0.5 0.5 0.3" />
+            <geom type="capsule" size="0.0075" fromto="0 -0.017 0 0 -0.017 -0.0788241" name="BR_tibia_vis" group="2" rgba="0.62 0.81 0.93 1" contype="0" conaffinity="0" mass="0" />
+            <geom mass="0.0018029" type="sphere" size="0.0085" pos="0 -0.017 -0.0788241" name="BR_foot_col" group="3" rgba="0.5 0.5 0.5 0.3" />
+            <geom type="sphere" size="0.0085" pos="0 -0.017 -0.0788241" name="BR_foot_vis" group="2" rgba="0.35 0.35 0.35 1" contype="0" conaffinity="0" mass="0" />
+            <site name="BR_foot_site" pos="0 -0.017 -0.0788241" size="0.0095" rgba="1 0 0 1" />
+          </body>
+        </body>
+      </body>
+      <geom name="cmp_cell_18650_1" type="box" size="0.0325 0.00925 0.00925" pos="0 -0.03 -0.028" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_cell_18650_2" type="box" size="0.0325 0.00925 0.00925" pos="0 -0.01 -0.028" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_cell_18650_3" type="box" size="0.0325 0.00925 0.00925" pos="0 0.01 -0.028" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_cell_18650_4" type="box" size="0.0325 0.00925 0.00925" pos="0 0.03 -0.028" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_bms_4s" type="box" size="0.025 0.01 0.002" pos="-0.045 0 -0.014" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_ubec_left" type="box" size="0.015 0.0075 0.005" pos="-0.045 0.035 -0.014" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_ubec_right" type="box" size="0.015 0.0075 0.005" pos="-0.045 -0.035 -0.014" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_power_switch" type="box" size="0.01 0.0065 0.0065" pos="-0.058 0 0.01" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_power_conn" type="box" size="0.006 0.006 0.006" pos="-0.058 0.02 0.01" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_usbc_conn" type="box" size="0.006 0.006 0.006" pos="-0.058 -0.02 0.01" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_raspberry_pi5" type="box" size="0.0425 0.028 0.006" pos="0 0 0.006" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_pico2" type="box" size="0.0255 0.0105 0.002" pos="0.03 0.035 0.022" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_pcb_proto" type="box" size="0.035 0.025 0.0015" pos="0 0 0.022" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_gpio_header" type="box" size="0.0255 0.0025 0.0045" pos="0 0.025 0.014" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_pin_headers" type="box" size="0.02 0.0025 0.0045" pos="0 -0.025 0.022" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_wt901_imu" type="box" size="0.018 0.008 0.004" pos="0 0 0.014" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_camera_v3" type="box" size="0.0125 0.012 0.0045" pos="0.055 0 0.012" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_yaw_servo_FL" type="box" size="0.0115 0.006 0.0145" pos="0.0465 0.0385 -0.02" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_yaw_servo_FR" type="box" size="0.0115 0.006 0.0145" pos="0.0465 -0.0385 -0.02" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_yaw_servo_BL" type="box" size="0.0115 0.006 0.0145" pos="-0.0465 0.0385 -0.02" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_yaw_servo_BR" type="box" size="0.0115 0.006 0.0145" pos="-0.0465 -0.0385 -0.02" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_bottom_case" type="box" size="0.0575 0.0465 0.009" pos="0 0 -0.036" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_top_case" type="box" size="0.0625 0.0525 0.02" pos="0 0 0.034" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_wiring_harness" type="box" size="0.05 0.04 0.03" pos="0 0 0" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_batt_connectors" type="box" size="0.02 0.015 0.0075" pos="-0.03 0 -0.02" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_screws_m2x8" type="box" size="0.055 0.045 0.035" pos="0 0 0" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_screws_m2x10" type="box" size="0.055 0.045 0.035" pos="0 0 0" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_screws_m2x15" type="box" size="0.055 0.045 0.035" pos="0 0 0" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_screws_m3x10" type="box" size="0.045 0.03 0.005" pos="0 0 -0.036" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <geom name="cmp_real_shells_delta" type="box" size="0.055 0.045 0.02" pos="-0.005 0 -0.004" group="4" mass="0" contype="0" conaffinity="0" rgba="0.92 0.41 0.20 0.45" />
+      <site name="imu" pos="0 0 0" size="0.008" rgba="0 1 0 0.6" />
+    </body>
+  </worldbody>
+  <actuator>
+    <position name="act_FL_yaw" joint="FL_yaw" ctrlrange="-1.6 1.6" forcerange="-0.17652 0.17652" kp="1.26423" kv="0.0168596" />
+    <position name="act_FL_pitch" joint="FL_pitch" ctrlrange="-1.4 1.4" forcerange="-0.245166 0.245166" kp="1.75587" kv="0.0234161" />
+    <position name="act_FL_knee" joint="FL_knee" ctrlrange="-2.2 2.2" forcerange="-0.245166 0.245166" kp="1.75587" kv="0.0234161" />
+    <position name="act_FR_yaw" joint="FR_yaw" ctrlrange="-1.6 1.6" forcerange="-0.17652 0.17652" kp="1.26423" kv="0.0168596" />
+    <position name="act_FR_pitch" joint="FR_pitch" ctrlrange="-1.4 1.4" forcerange="-0.245166 0.245166" kp="1.75587" kv="0.0234161" />
+    <position name="act_FR_knee" joint="FR_knee" ctrlrange="-2.2 2.2" forcerange="-0.245166 0.245166" kp="1.75587" kv="0.0234161" />
+    <position name="act_BL_yaw" joint="BL_yaw" ctrlrange="-1.6 1.6" forcerange="-0.17652 0.17652" kp="1.26423" kv="0.0168596" />
+    <position name="act_BL_pitch" joint="BL_pitch" ctrlrange="-1.4 1.4" forcerange="-0.245166 0.245166" kp="1.75587" kv="0.0234161" />
+    <position name="act_BL_knee" joint="BL_knee" ctrlrange="-2.2 2.2" forcerange="-0.245166 0.245166" kp="1.75587" kv="0.0234161" />
+    <position name="act_BR_yaw" joint="BR_yaw" ctrlrange="-1.6 1.6" forcerange="-0.17652 0.17652" kp="1.26423" kv="0.0168596" />
+    <position name="act_BR_pitch" joint="BR_pitch" ctrlrange="-1.4 1.4" forcerange="-0.245166 0.245166" kp="1.75587" kv="0.0234161" />
+    <position name="act_BR_knee" joint="BR_knee" ctrlrange="-2.2 2.2" forcerange="-0.245166 0.245166" kp="1.75587" kv="0.0234161" />
+  </actuator>
+  <keyframe>
+    <key name="stand" qpos="0 0 0.1030241 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0" ctrl="0 0 0 0 0 0 0 0 0 0 0 0" />
+  </keyframe>
+  <visual>
+    <global offwidth="1920" offheight="1080" />
+  </visual>
+  <contact>
+    <exclude body1="trunk" body2="FL_hip" />
+    <exclude body1="trunk" body2="FL_femur" />
+    <exclude body1="trunk" body2="FL_tibia" />
+    <exclude body1="trunk" body2="FR_hip" />
+    <exclude body1="trunk" body2="FR_femur" />
+    <exclude body1="trunk" body2="FR_tibia" />
+    <exclude body1="trunk" body2="BL_hip" />
+    <exclude body1="trunk" body2="BL_femur" />
+    <exclude body1="trunk" body2="BL_tibia" />
+    <exclude body1="trunk" body2="BR_hip" />
+    <exclude body1="trunk" body2="BR_femur" />
+    <exclude body1="trunk" body2="BR_tibia" />
+  </contact>
+  <sensor>
+    <framequat name="imu_quat" objtype="site" objname="imu" />
+    <gyro name="imu_gyro" site="imu" />
+    <accelerometer name="imu_acc" site="imu" />
+    <velocimeter name="trunk_vel" site="imu" />
+    <touch name="FL_touch" site="FL_foot_site" />
+    <touch name="FR_touch" site="FR_foot_site" />
+    <touch name="BL_touch" site="BL_foot_site" />
+    <touch name="BR_touch" site="BR_foot_site" />
+  </sensor>
+</mujoco>

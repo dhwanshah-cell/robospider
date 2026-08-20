@@ -1,0 +1,15 @@
+These are the URDF *collision proxies* from VGlukhov-git/CubeBot_RL.
+THREE OF THEM ARE NOT REAL PARTS:
+
+  Bottom_case.stl       99% of its bounding box  -> a solid slab
+  Leg_middle_part.stl   99%                      -> a solid slab
+  Top_case.stl          12 triangles             -> a bare cuboid
+
+They are stored in METRES (scale x1000 on import) and exist only so the
+physics engine has something to compute contacts against.
+
+Top_Case_HD.stl IS real, and is the same part as "Body Frame" in
+../stl-real/ (volumes match to 0.024%) at higher resolution: 57,124
+triangles vs 10,320.
+
+Print from ../stl-real/ instead.
