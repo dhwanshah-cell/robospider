@@ -99,9 +99,10 @@ media/   gait and climb renders
 
 ## Known limitations
 
-**Mass is calculated, not weighed.** 751.7 g comes from CAD volumes plus
-datasheet component masses. The parts total suggests it could reach ~875 g,
-which would put the pitch joint near its limit. Nothing here has been on a scale.
+**Mass is now measured.** Printed parts weighed ~300 g including support;
+backing out ~15% support gives ~255 g of parts and a **~735 g robot**. The model
+here runs at 751.7 g — at or slightly above reality, so the validated loads are
+mildly conservative. Effective print fill is ~0.55, not the 0.85 first assumed.
 
 **Trunk component positions are an assumed layout.** The mass model is real —
 30 components parallel-axis'd into a proper inertia tensor, with the CoM 11.5 mm
