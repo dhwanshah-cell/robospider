@@ -14,7 +14,7 @@ Repo: https://github.com/dhwanshah-cell/robospider (public)
 | servos | **SG90 / MG90S class (1.8 kg·cm @4.8 V) on all 12** — what is in hand |
 | robot mass | **~735 g — MEASURED, no longer an estimate** |
 | sim validated at | 751.7 g (at/above real, so slightly conservative) |
-| gait for the demo | **1.0 Hz, 55 mm step, +10 mm stance height** -> ~4 cm/s |
+| gait for the demo | **1.0 Hz, 55 mm step, +10 mm stance height** -> ~4 cm/s (do not slow it; see #2) |
 | blocker | **11 x M3 screws short** (see Fasteners) |
 
 ### The mass question is CLOSED
@@ -65,9 +65,20 @@ Do not re-derive these; they are measured and documented.
 
 1. **Walking loads the shoulder; climbing loads the knee.** Sizing for one leaves
    you short on the other.
-2. **Slower is worse.** Shoulder load is static-hold dominated, so 0.8 Hz has
-   *higher* RMS torque than 1.0 Hz and covers less ground. **Never slow the gait
-   down to help it.**
+2. **Slowing down does not relieve the servos.** Shoulder torque in stance is
+   the robot's weight on a 48 mm lever arm — a *static* load, independent of how
+   fast the leg moves. Duty factor is fixed at 0.75, so each leg carries it 75%
+   of every cycle whatever the frequency. Measured, all-SG90:
+
+       0.80 Hz -> pitch RMS 45%, 1.85 cm/s      0.40 Hz -> 51%, 1.01 cm/s
+       0.60 Hz -> 47%, 1.77 cm/s                0.30 Hz -> 54%, 0.53 cm/s
+       0.50 Hz -> 49%, 1.18 cm/s                0.25 Hz -> 56%, 0.37 cm/s (saturates)
+
+   At 0.8 vs 1.0 Hz specifically: RMS is the same (39% vs 38%), pitch/knee peaks
+   are slightly *higher* at 1.0 Hz, yaw is lower, and 1.0 Hz covers 2.2x the
+   ground. So slowing down buys no thermal relief and costs most of the speed;
+   below ~0.5 Hz it actively makes the load worse. **If it struggles, stand it
+   taller (item 3) rather than slowing it down.**
 3. **Stand tall, never crouch.** +10 mm stance is the single biggest load
    reduction; crouching 12 mm pushes pitch to 100% and it starts saturating.
 4. **Walls beat infill for the leg.** In bending, stress is at the outer fibres
