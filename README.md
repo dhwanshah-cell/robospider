@@ -68,9 +68,11 @@ Nothing saturates in any case tested.
 you short on the other. The knee peaks at 74% walking but needs 0.205 N·m with a
 foot planted on a 144 mm wall — which an MG90S (1.8 kg·cm) cannot deliver at all.
 
-**Slower is worse.** Shoulder load is static-hold dominated, so dropping the
-gait from 1.0 Hz to 0.8 Hz *raises* the RMS torque and covers less ground. Run
-it at 1.0 Hz.
+**Slowing down does not relieve the servos.** Shoulder torque in stance is the
+robot's weight on a 48 mm lever arm — static, and independent of leg speed. RMS
+load is flat between 0.8 and 1.0 Hz (39% vs 38%) and *rises* below 0.5 Hz, while
+speed more than halves. Slowing down buys no thermal relief and costs the
+distance; stand the robot taller instead.
 
 **A bigger servo is not the answer.** An MG996R has 5× the torque but half the
 speed, four times the mass, and its 19.7 mm body does not fit a 15.0 mm hip
