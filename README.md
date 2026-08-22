@@ -8,6 +8,15 @@ it will actually be built with.
 *Crawl gait, 0.9 Hz. Physics, contacts and real servo torque/speed limits — not
 a kinematic playback.*
 
+## SIH25212 mission-control site
+
+[`web/`](web/) is the RoboSpider structural-inspection mission-control web
+app for SIH25212 — a mission-control interface built around this repo's
+validated robot data, with an interactive collapsed-structure simulation
+(gait speed, communication loss, checkpoint-based return, battery
+management, structural hazard assessment). See [`web/README.md`](web/README.md)
+for local setup and deployment.
+
 ## Quick start
 
 ```bash
