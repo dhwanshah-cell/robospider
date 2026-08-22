@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-base-950 text-zinc-200 font-sans antialiased;
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(232, 147, 15, 0.06), transparent 40%),
+      radial-gradient(circle at 85% 20%, rgba(46, 168, 196, 0.06), transparent 40%);
+  }
+  ::selection {
+    @apply bg-amber-500/30 text-white;
+  }
+  * {
+    scrollbar-color: #2a2f3a #0c0e11;
+    scrollbar-width: thin;
+  }
+}
+
+@layer components {
+  .label-tag {
+    @apply inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-wider;
+  }
+  .label-real {
+    @apply label-tag border-ok/40 bg-ok/10 text-ok;
+  }
+  .label-sim {
+    @apply label-tag border-cyan-400/40 bg-cyan-400/10 text-cyan-300;
+  }
+  .label-planned {
+    @apply label-tag border-amber-400/40 bg-amber-400/10 text-amber-400;
+  }
+  .panel {
+    @apply rounded-lg border border-base-600/60 bg-base-850/80 shadow-panel backdrop-blur-sm;
+  }
+  .panel-header {
+    @apply flex items-center justify-between border-b border-base-600/60 px-4 py-2.5;
+  }
+  .mono-num {
+    @apply font-mono tabular-nums;
+  }
+  .kicker {
+    @apply font-mono text-xs font-semibold uppercase tracking-[0.2em] text-amber-500;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md border border-base-600 bg-base-800 px-3 py-2 font-mono text-xs font-semibold uppercase tracking-wide text-zinc-200 transition-colors hover:border-amber-500/50 hover:bg-base-700 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-base-600 disabled:hover:bg-base-800;
+  }
+  .btn-primary {
+    @apply border-amber-500/60 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25;
+  }
+  .btn-danger {
+    @apply border-risk/50 bg-risk/10 text-risk hover:bg-risk/20;
+  }
+}
