@@ -90,7 +90,8 @@ how each was validated.
 
 ```
 sim/     cubebot.xml, cubebot.urdf, view.py
-cad/     stl-real/            the actual printable parts
+cad/     step-assembly/       complete 28-part STEP assembly
+         stl-real/            the actual printable parts
          stl-collision-proxies/   URDF stand-ins — see DO_NOT_PRINT.txt
          urdf-original/       original export — see MASSES_ARE_FAKE.txt
 docs/    leg statics, fastener census, handoff, params
@@ -98,6 +99,11 @@ tools/   sim, joint-control panel, gait generator, mass model, audits
 data/    recorded takes and poses
 media/   gait and climb renders
 ```
+
+The complete assembly is available as a single STEP file at
+[`cad/step-assembly/cubebot_assembly.step`](cad/step-assembly/cubebot_assembly.step)
+— all 28 parts in place, 21 MB, openable in any CAD package. Use it when you need
+the real solid geometry rather than the STL surface exports.
 
 ## Known limitations
 
