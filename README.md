@@ -1,4 +1,4 @@
-# CubeBot
+# RoboSpider
 
 A 12-DOF sprawled quadruped, simulated in MuJoCo and sized against the servos
 it will actually be built with.
