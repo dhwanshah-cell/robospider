@@ -73,6 +73,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.robospider.hexapod.BuildConfig
 import com.robospider.hexapod.Drive
+import com.robospider.hexapod.Gait
 import com.robospider.hexapod.HexapodViewModel
 import com.robospider.hexapod.Legs
 import java.util.concurrent.Executors
@@ -105,7 +106,9 @@ fun HexapodScreen(vm: HexapodViewModel, cameraGranted: Boolean) {
             StatusCard(vm)
             RescueCard(vm, cameraGranted)
             DriveCard(vm)
-            Legs.ALL.indices.forEach { LegCard(vm, it) }
+            WalkingCard(vm)
+            // Leg cards in channel order, S1 first.
+            Legs.ALL.indices.sortedBy { vm.cal.servo(it, 0) }.forEach { LegCard(vm, it) }
             CalibrationCard(vm)
             Text(
                 "Hexapod SAR · ${BuildConfig.BUILD_STAMP} · v${BuildConfig.VERSION_NAME}",
@@ -334,6 +337,54 @@ private fun RowScope.HoldBtn(label: String, drive: Drive, vm: HexapodViewModel) 
     }
 }
 
+// ---- Walking settings ---------------------------------------------------------------------------
+
+@Composable
+private fun WalkingCard(vm: HexapodViewModel) = Card {
+    val c = vm.cal
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text("Walking", color = TextMain, fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.weight(1f))
+        if (vm.unsaved) Text("unsaved", color = Yellow, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+    }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("gait", color = TextMain, fontSize = 16.sp, modifier = Modifier.weight(1f))
+        Gait.entries.forEach { g ->
+            Btn(g.label, fill = if (c.gait == g) Yellow else null, height = 40) { vm.setWalking(gait = g) }
+        }
+    }
+    Text(
+        if (c.gait == Gait.CRAWL) "Crawl: one pair of legs steps at a time, four feet stay down. Slow and steady."
+        else "Tripod: three legs step at once. Twice as fast, less stable.",
+        color = Muted, fontSize = 13.sp,
+    )
+    SettingRow("step time", "%.1f s".format(c.cycleMs / 1000.0), "−", "+") { d -> vm.setWalking(cycleMs = c.cycleMs + d * 200) }
+    SettingRow("lift height", "${c.lift} mm", "−5", "+5") { d -> vm.setWalking(lift = c.lift + d * 5) }
+    SettingRow(
+        "drift fix",
+        when {
+            c.driftTenths == 0 -> "off"
+            c.driftTenths > 0 -> "%.1f° L".format(c.driftTenths / 10.0)
+            else -> "%.1f° R".format(-c.driftTenths / 10.0)
+        },
+        "◀ L", "R ▶",
+    ) { d -> vm.setWalking(driftTenths = c.driftTenths - d * 5) }
+    Text(
+        "Walking forward, the robot curves right? Tap ◀ L until it goes straight. Curves left? Tap R ▶. " +
+            "Each tap turns it 0.5° per step. Save in Calibration below.",
+        color = Muted, fontSize = 13.sp,
+    )
+}
+
+@Composable
+private fun SettingRow(label: String, value: String, minus: String, plus: String, onStep: (Int) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(label, color = TextMain, fontSize = 16.sp, modifier = Modifier.weight(1f))
+        Btn(minus, height = 40) { onStep(-1) }
+        Text(value, color = TextMain, fontFamily = Mono, fontSize = 15.sp, textAlign = TextAlign.Center, modifier = Modifier.width(80.dp))
+        Btn(plus, height = 40) { onStep(1) }
+    }
+}
+
 // ---- Per-leg servo cards --------------------------------------------------------------------------
 
 @Composable
@@ -346,9 +397,9 @@ private fun LegCard(vm: HexapodViewModel, leg: Int) = Card {
         Text(info.code, color = color, fontWeight = FontWeight.Bold, fontSize = 18.sp)
         Spacer(Modifier.width(8.dp))
         Text(info.name, color = TextMain, fontSize = 17.sp, modifier = Modifier.weight(1f))
-        Text("S${Legs.channel(leg, 0)}/${Legs.channel(leg, 1)}/${Legs.channel(leg, 2)}", color = Muted, fontFamily = Mono, fontSize = 13.sp)
+        Text("S${vm.cal.channel(leg, 0)}/${vm.cal.channel(leg, 1)}/${vm.cal.channel(leg, 2)}", color = Muted, fontFamily = Mono, fontSize = 13.sp)
     }
-    for (j in 0 until 3) JointRow(vm, leg * 3 + j, Legs.JOINTS[j], color)
+    for (j in 0 until 3) JointRow(vm, vm.cal.servo(leg, j), Legs.JOINTS[j], color)
 }
 
 @Composable
@@ -404,6 +455,12 @@ private fun CalibrationCard(vm: HexapodViewModel) = Card {
         color = Muted, fontSize = 14.sp,
     )
     val c = vm.cal
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("S10–12 is", color = TextMain, fontSize = 16.sp, modifier = Modifier.weight(1f))
+        Btn("Left front", fill = if (c.leftFrontFirst) Yellow else null, height = 40) { vm.setLeftFrontFirst(true) }
+        Btn("Left rear", fill = if (!c.leftFrontFirst) Yellow else null, height = 40) { vm.setLeftFrontFirst(false) }
+    }
+    Text("Press + on S10: whichever left leg moves is the answer.", color = Muted, fontSize = 13.sp)
     LengthRow("coxa length", c.coxa, 1) { vm.setLengths(coxa = it) }
     LengthRow("femur length", c.femur, 1) { vm.setLengths(femur = it) }
     LengthRow("tibia length", c.tibia, 1) { vm.setLengths(tibia = it) }

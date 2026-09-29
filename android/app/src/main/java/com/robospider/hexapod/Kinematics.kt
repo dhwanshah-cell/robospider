@@ -40,7 +40,10 @@ object Kinematics {
     private const val MOUNT_RADIUS = 60.0
 
     // Tripod groups: RF, RR, LM swing together; RM, LF, LR swing together.
-    private val PHASE_OFFSET = doubleArrayOf(0.0, 0.5, 0.0, 0.5, 0.0, 0.5)
+    private val TRIPOD_OFFSET = doubleArrayOf(0.0, 0.5, 0.0, 0.5, 0.0, 0.5)
+
+    // Crawl pairs, in stepping order (the old app's): RF+LR, then RM+LM, then RR+LF.
+    private val CRAWL_PAIR = intArrayOf(0, 1, 2, 2, 1, 0)
 
     private fun rad(d: Double) = d * PI / 180.0
     private fun deg(r: Double) = r * 180.0 / PI
@@ -61,8 +64,41 @@ object Kinematics {
     fun pulse(angleDeg: Double, channelIndex: Int, c: Calibration): Int =
         (1500 + c.dir[channelIndex] * angleDeg * US_PER_DEG + c.trim[channelIndex]).roundToInt().coerceIn(Legs.MIN_US, Legs.MAX_US)
 
+    /** Eases a step in and out, so feet don't jerk at lift-off and touchdown. */
+    private fun smooth(u: Double) = u * u * (3 - 2 * u)
+
     /**
-     * All 18 pulses for gait [phase] (0..1, one full tripod cycle) under [drive].
+     * Where leg [leg] is in its step at gait [phase] (0..1): s runs -1 (foot back) to +1 (foot
+     * forward) while lifted, and back again on the ground; returns (s, 0..1 lift fraction).
+     */
+    private fun stepState(gait: Gait, leg: Int, phase: Double): Pair<Double, Double> = when (gait) {
+        Gait.TRIPOD -> {
+            val t = (phase + TRIPOD_OFFSET[leg]).mod(1.0)
+            if (t < 0.5) {
+                val u = 2 * t
+                (-1 + 2 * smooth(u)) to sin(PI * u)
+            } else {
+                (1 - 4 * (t - 0.5)) to 0.0
+            }
+        }
+        Gait.CRAWL -> {
+            // Quarters 0-2: one pair steps while four feet hold still. Quarter 3: all six push.
+            val seg = phase.mod(1.0) * 4
+            val pair = CRAWL_PAIR[leg]
+            when {
+                seg >= 3 -> (1 - 2 * (seg - 3)) to 0.0
+                seg < pair -> -1.0 to 0.0
+                seg < pair + 1 -> {
+                    val u = seg - pair
+                    (-1 + 2 * smooth(u)) to sin(PI * u)
+                }
+                else -> 1.0 to 0.0
+            }
+        }
+    }
+
+    /**
+     * All 18 pulses (index = channel - 1) for gait [phase] (0..1, one full cycle) under [drive].
      * [pitchDeg]/[rollDeg] tilt the body (nose up / left side up) for self-levelling.
      * Legs that can't reach their target keep the pulses from [previous].
      */
@@ -77,10 +113,13 @@ object Kinematics {
         val out = previous.copyOf()
         val reach = (c.coxa + c.femur).toDouble()
         val height = c.tibia.toDouble()
-        val lift = (0.3 * c.tibia).coerceIn(15.0, 40.0)
+        val lift = c.lift.toDouble()
         val half = c.step / 2.0
         val footRadius = MOUNT_RADIUS + reach
         val maxTurn = half / footRadius
+        // Drift correction: a small counter-turn whenever the robot walks forward or back.
+        val drift = if (drive.fwd != 0.0 && maxTurn > 0) rad(c.driftTenths / 10.0) / (2 * maxTurn) * drive.fwd else 0.0
+        val turn = drive.turn + drift
         // Diagonal walking shouldn't take longer strides than straight walking.
         val norm = sqrt(drive.fwd * drive.fwd + drive.left * drive.left).coerceAtLeast(1.0)
 
@@ -92,23 +131,12 @@ object Kinematics {
             val nx = mx + reach * cos(a)
             val ny = my + reach * sin(a)
 
-            // s runs -1 → +1 through the swing (foot in the air), +1 → -1 through the stance.
-            var s = 0.0
-            var up = 0.0
-            if (!drive.idle) {
-                val t = (phase + PHASE_OFFSET[leg]).mod(1.0)
-                if (t < 0.5) {
-                    s = -1 + 4 * t
-                    up = lift * sin(PI * 2 * t)
-                } else {
-                    s = 1 - 4 * (t - 0.5)
-                }
-            }
-            val th = s * drive.turn * maxTurn
+            val (s, up) = if (drive.idle) 0.0 to 0.0 else stepState(c.gait, leg, phase)
+            val th = s * turn * maxTurn
             var fx = nx * cos(th) - ny * sin(th) + s * half * drive.fwd / norm
             var fy = nx * sin(th) + ny * cos(th) + s * half * drive.left / norm
             // Lower a foot to raise that corner of the body.
-            val fz = -height + up - fx * tan(rad(pitchDeg)) - fy * tan(rad(rollDeg))
+            val fz = -height + up * lift - fx * tan(rad(pitchDeg)) - fy * tan(rad(rollDeg))
 
             // Into the leg frame: origin at the coxa pivot, x straight out.
             fx -= mx
@@ -117,7 +145,10 @@ object Kinematics {
             val ly = -fx * sin(a) + fy * cos(a)
 
             val angles = ik(lx, ly, fz, c) ?: continue
-            for (j in 0 until 3) out[leg * 3 + j] = pulse(angles[j], leg * 3 + j, c)
+            for (j in 0 until 3) {
+                val i = c.servo(leg, j)
+                out[i] = pulse(angles[j], i, c)
+            }
         }
         return out
     }

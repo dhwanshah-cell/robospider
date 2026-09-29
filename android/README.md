@@ -25,7 +25,12 @@ USC-32 channels, each leg in coxa / femur / tibia order:
 | LM left middle | S13 S14 S15 |
 | LR left rear | S16 S17 S18 |
 
-Phone → USB-OTG adapter → USC-32 USB port. Plugging it in offers to open the app;
+If your left front and left rear are the other way round (the old app's wiring), set
+**Calibration → S10–12 is → Left rear**. Press + on S10 to see which leg it is.
+
+Phone → USB-OTG adapter → USC-32 USB port. Known USB-serial chips are driven as serial
+ports; anything else gets raw writes to its USB endpoint. The grey line under the status
+shows what the phone sees. Plugging it in offers to open the app;
 otherwise tap **Connect**. Pick the baud rate your board uses (9600 or 115200).
 Commands are the USC-32 text protocol, e.g. `#1P1500#2P1600T200`.
 
@@ -38,7 +43,11 @@ Commands are the USC-32 text protocol, e.g. `#1P1500#2P1600T200`.
   sees a person or hears speech, shouting, crying, knocking etc. it stops and sends an
   alert with a photo and the phone's location. Rescuers install the ntfy app and
   subscribe to the topic shown. Alerts that can't be sent are saved and resent later.
-- **Hold to walk**: tripod gait while held, stands on release. **Stand** is the IK
+- **Hold to walk**: walks while held, stands on release.
+- **Walking**: *Crawl* (default) steps one pair at a time, RF+LR, RM+LM, RR+LF, then slides the
+  body, so four feet are always down; *Tripod* moves three legs at once and is twice as fast. Steps
+  ease in and out. **Step time** and **lift height** set the pace. **Drift fix** adds a small
+  counter-turn while walking: if the robot curves right, tap ◀ L until it goes straight. **Stand** is the IK
   neutral pose; **Center all** sends 1500 µs to every servo.
 - **Self-level**: with the phone upright on the robot (rear camera forward), leans the
   body against the tilt the phone measures.

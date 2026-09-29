@@ -11,8 +11,8 @@ plugins {
 }
 
 // Bump versionCode for every build you install over the last one.
-val appVersionCode = 2
-val appVersionName = "0.1.1"
+val appVersionCode = 3
+val appVersionName = "0.2.0"
 val buildStamp: String = SimpleDateFormat("yyyyMMdd-HHmm").apply {
     timeZone = TimeZone.getTimeZone("Asia/Kolkata")
 }.format(Date())

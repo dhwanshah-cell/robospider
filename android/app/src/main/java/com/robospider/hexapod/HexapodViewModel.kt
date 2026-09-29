@@ -115,6 +115,24 @@ class HexapodViewModel(app: Application) : AndroidViewModel(app), SensorEventLis
         resendIfPosed()
     }
 
+    fun setWalking(
+        gait: Gait = cal.gait,
+        lift: Int = cal.lift,
+        cycleMs: Int = cal.cycleMs,
+        driftTenths: Int = cal.driftTenths,
+    ) {
+        cal = cal.copy(
+            gait = gait, lift = lift.coerceIn(5, 60), cycleMs = cycleMs.coerceIn(400, 6000),
+            driftTenths = driftTenths.coerceIn(-150, 150),
+        )
+    }
+
+    /** Which left leg is wired to S10-12. Dir and trim stay with the servo channel. */
+    fun setLeftFrontFirst(on: Boolean) {
+        cal = cal.copy(leftFrontFirst = on)
+        resendIfPosed()
+    }
+
     fun saveCalibration() {
         settings.saveCalibration(cal)
         savedCal = cal
@@ -322,7 +340,8 @@ class HexapodViewModel(app: Application) : AndroidViewModel(app), SensorEventLis
         viewModelScope.launch {
             while (true) {
                 val tick = tickMs()
-                val cycleMs = maxOf(1000.0, tick * 8.0)
+                // Enough command frames per cycle for a smooth step: a crawl needs twice a tripod's.
+                val cycleMs = maxOf(cal.cycleMs.toDouble(), tick * if (cal.gait == Gait.CRAWL) 16.0 else 8.0)
                 val now = SystemClock.elapsedRealtime()
 
                 if (selfLevel && upright && posed) {
