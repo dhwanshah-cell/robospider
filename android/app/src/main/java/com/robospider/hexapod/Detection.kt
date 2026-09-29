@@ -11,12 +11,13 @@ import android.os.SystemClock
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
 import com.google.mediapipe.framework.image.BitmapImageBuilder
-import com.google.mediapipe.tasks.audio.audioclassifier.AudioClassifier
-import com.google.mediapipe.tasks.components.containers.AudioData
 import com.google.mediapipe.tasks.core.BaseOptions
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.objectdetector.ObjectDetector
+import org.tensorflow.lite.Interpreter
 import java.io.ByteArrayOutputStream
+import java.io.FileInputStream
+import java.nio.channels.FileChannel
 
 /**
  * Looks for people in camera frames with EfficientDet-Lite0 (COCO "person"), about
@@ -24,6 +25,10 @@ import java.io.ByteArrayOutputStream
  */
 class PersonDetector(context: Context, private val onResult: (score: Float, fps: Float) -> Unit) :
     ImageAnalysis.Analyzer {
+
+    /** Why the detector couldn't start, shown in place of the score. */
+    var error: String? = null
+        private set
 
     private val detector: ObjectDetector? = try {
         ObjectDetector.createFromOptions(
@@ -36,7 +41,8 @@ class PersonDetector(context: Context, private val onResult: (score: Float, fps:
                 .setCategoryAllowlist(listOf("person"))
                 .build(),
         )
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
+        error = "${e.javaClass.simpleName} ${e.message ?: ""}".trim()
         null
     }
     val available get() = detector != null
@@ -94,17 +100,20 @@ class SoundListener(private val context: Context, private val onResult: (label: 
     @SuppressLint("MissingPermission")
     fun start() {
         if (thread != null) return
+        val previous = stopping
         thread = Thread({
-            val classifier = try {
-                AudioClassifier.createFromOptions(
-                    context,
-                    AudioClassifier.AudioClassifierOptions.builder()
-                        .setBaseOptions(BaseOptions.builder().setModelAssetPath("yamnet.tflite").build())
-                        .setMaxResults(1)
-                        .build(),
-                )
-            } catch (e: Exception) {
-                onResult("unavailable", 0f)
+            // The last listener may still hold the microphone for up to one read.
+            previous?.join(2000)
+            val interpreter: Interpreter
+            val labels: List<String>
+            try {
+                val fd = context.assets.openFd("yamnet.tflite")
+                val model = FileInputStream(fd.fileDescriptor).channel
+                    .map(FileChannel.MapMode.READ_ONLY, fd.startOffset, fd.declaredLength)
+                interpreter = Interpreter(model, Interpreter.Options().setNumThreads(2))
+                labels = context.assets.open("yamnet_labels.txt").bufferedReader().readLines()
+            } catch (e: Throwable) {
+                onResult("error: ${e.javaClass.simpleName} ${e.message ?: ""}".trim(), 0f)
                 return@Thread
             }
             val rate = 16000
@@ -115,34 +124,46 @@ class SoundListener(private val context: Context, private val onResult: (label: 
                     MediaRecorder.AudioSource.MIC, rate, AudioFormat.CHANNEL_IN_MONO,
                     AudioFormat.ENCODING_PCM_16BIT, maxOf(minBuf, window * 2),
                 ).also { it.startRecording() }
-            } catch (e: Exception) {
-                classifier.close()
-                onResult("no mic", 0f)
+            } catch (e: Throwable) {
+                interpreter.close()
+                onResult("no mic (${e.javaClass.simpleName})", 0f)
                 return@Thread
             }
-            val format = AudioData.AudioDataFormat.builder().setNumOfChannels(1).setSampleRate(rate.toFloat()).build()
-            val audio = AudioData.create(format, window)
+            if (rec.recordingState != AudioRecord.RECORDSTATE_RECORDING) {
+                rec.release()
+                interpreter.close()
+                onResult("no mic (busy or not allowed)", 0f)
+                return@Thread
+            }
+            val wave = FloatArray(window) // last ~1 s of audio, oldest first
             val hop = ShortArray(rate / 2)
+            val scores = Array(1) { FloatArray(labels.size.coerceAtLeast(521)) }
             try {
                 while (!Thread.currentThread().isInterrupted) {
                     val n = rec.read(hop, 0, hop.size)
                     if (n <= 0) continue
-                    audio.load(hop, 0, n) // ring buffer: keeps the last `window` samples
-                    val top = classifier.classify(audio).classificationResults().firstOrNull()
-                        ?.classifications()?.firstOrNull()?.categories()?.firstOrNull()
-                    if (top != null) onResult(top.categoryName(), top.score())
+                    System.arraycopy(wave, n, wave, 0, window - n)
+                    for (k in 0 until n) wave[window - n + k] = hop[k] / 32768f
+                    interpreter.run(wave, scores)
+                    val s = scores[0]
+                    var best = 0
+                    for (k in s.indices) if (s[k] > s[best]) best = k
+                    onResult(labels.getOrElse(best) { "class $best" }, s[best])
                 }
-            } catch (_: Exception) {
+            } catch (e: Throwable) {
+                if (!Thread.currentThread().isInterrupted) onResult("error: ${e.javaClass.simpleName}", 0f)
             } finally {
                 rec.stop()
                 rec.release()
-                classifier.close()
+                interpreter.close()
             }
         }, "sound-listener").apply { isDaemon = true; start() }
     }
 
+    private var stopping: Thread? = null
+
     fun stop() {
-        thread?.interrupt()
+        stopping = thread?.also { it.interrupt() }
         thread = null
     }
 
@@ -151,8 +172,7 @@ class SoundListener(private val context: Context, private val onResult: (label: 
         val HUMAN_SOUNDS = setOf(
             "Speech", "Shout", "Yell", "Screaming", "Crying, sobbing", "Baby cry, infant cry", "Whimper",
             "Groan", "Gasp", "Children shouting", "Babbling", "Conversation", "Narration, monologue",
-            "Whistling", "Knock", "Tap", "Clapping", "Cough", "Wail, moan", "Sigh", "Female speech, woman speaking",
-            "Male speech, man speaking", "Child speech, kid speaking",
+            "Whistling", "Knock", "Tap", "Clapping", "Cough", "Wail, moan", "Sigh", "Child speech, kid speaking",
         )
     }
 }

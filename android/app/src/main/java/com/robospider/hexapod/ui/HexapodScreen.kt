@@ -175,6 +175,7 @@ private fun StatusCard(vm: HexapodViewModel) = Card {
             color = Muted, fontSize = 14.sp,
         )
     }
+    if (vm.usbDetails.isNotEmpty()) Text(vm.usbDetails, color = Muted, fontFamily = Mono, fontSize = 11.sp)
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("baud", color = Muted, fontSize = 14.sp)
         listOf(9600, 115200).forEach { b ->
@@ -207,8 +208,8 @@ private fun RescueCard(vm: HexapodViewModel, cameraGranted: Boolean) = Card {
                 .padding(horizontal = 10.dp, vertical = 6.dp),
         ) {
             val detector = if (vm.personDetector.available) "person %d%% · %.0f fps".format((vm.personScore * 100).roundToInt(), vm.fps)
-            else "person detector unavailable"
-            Text(detector, color = Color.White, fontFamily = Mono, fontSize = 14.sp)
+            else "person detector error: ${vm.personDetector.error}"
+            Text(detector, color = Color.White, fontFamily = Mono, fontSize = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text("sound: ${vm.soundLabel} %d%%".format((vm.soundScore * 100).roundToInt()), color = Color.White, fontFamily = Mono, fontSize = 14.sp)
         }
     }
@@ -243,7 +244,11 @@ private fun NtfyField(label: String, value: String, modifier: Modifier, onChange
 private fun CameraPreview(vm: HexapodViewModel) {
     val context = LocalContext.current
     val owner = LocalLifecycleOwner.current
-    val previewView = remember { PreviewView(context).apply { scaleType = PreviewView.ScaleType.FILL_CENTER } }
+    val previewView = remember { PreviewView(context).apply {
+            scaleType = PreviewView.ScaleType.FILL_CENTER
+            // TextureView: clips to the rounded box and scrolls with the page (a SurfaceView doesn't).
+            implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+        } }
     DisposableEffect(owner) {
         val executor = Executors.newSingleThreadExecutor()
         val future = ProcessCameraProvider.getInstance(context)

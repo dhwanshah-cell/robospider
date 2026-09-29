@@ -32,6 +32,7 @@ class HexapodViewModel(app: Application) : AndroidViewModel(app), SensorEventLis
     // ---- USB link -------------------------------------------------------------------
     var connected by mutableStateOf(false); private set
     var linkStatus by mutableStateOf("No USB device seen — dry run"); private set
+    var usbDetails by mutableStateOf(""); private set
     var baud by mutableStateOf(settings.baud); private set
     val log = mutableStateListOf<String>()
 
@@ -42,6 +43,7 @@ class HexapodViewModel(app: Application) : AndroidViewModel(app), SensorEventLis
                     connected = e.connected
                     linkStatus = e.text
                 }
+                is Usc32Link.Event.Devices -> usbDetails = e.text
                 is Usc32Link.Event.Sent -> {
                     log.add(0, (if (e.dryRun) "dry   " else "sent  ") + e.line)
                     while (log.size > 3) log.removeAt(log.lastIndex)
@@ -310,6 +312,13 @@ class HexapodViewModel(app: Application) : AndroidViewModel(app), SensorEventLis
     // ---- Control loop -------------------------------------------------------------------
     init {
         link.refresh()
+        // Pick up a board plugged in (or unplugged) while the app is open.
+        viewModelScope.launch {
+            while (true) {
+                delay(2000)
+                if (!connected) link.refresh()
+            }
+        }
         viewModelScope.launch {
             while (true) {
                 val tick = tickMs()

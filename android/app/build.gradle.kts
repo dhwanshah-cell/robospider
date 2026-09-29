@@ -2,6 +2,7 @@ import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.TimeZone
+import java.util.zip.ZipFile
 
 plugins {
     id("com.android.application")
@@ -10,8 +11,8 @@ plugins {
 }
 
 // Bump versionCode for every build you install over the last one.
-val appVersionCode = 1
-val appVersionName = "0.1.0"
+val appVersionCode = 2
+val appVersionName = "0.1.1"
 val buildStamp: String = SimpleDateFormat("yyyyMMdd-HHmm").apply {
     timeZone = TimeZone.getTimeZone("Asia/Kolkata")
 }.format(Date())
@@ -80,7 +81,7 @@ val models = mapOf(
 )
 val downloadModels by tasks.registering {
     val assets = layout.projectDirectory.dir("src/main/assets")
-    outputs.files(models.keys.map { assets.file(it) })
+    outputs.files(models.keys.map { assets.file(it) } + assets.file("yamnet_labels.txt"))
     doLast {
         models.forEach { (name, url) ->
             val out = assets.file(name).asFile
@@ -88,6 +89,13 @@ val downloadModels by tasks.registering {
                 out.parentFile.mkdirs()
                 logger.lifecycle("Downloading $name")
                 URI(url).toURL().openStream().use { input -> out.outputStream().use { input.copyTo(it) } }
+            }
+        }
+        // YAMNet's 521 class names are zipped into the model's metadata.
+        val labels = assets.file("yamnet_labels.txt").asFile
+        if (!labels.exists()) {
+            ZipFile(assets.file("yamnet.tflite").asFile).use { z ->
+                labels.writeBytes(z.getInputStream(z.getEntry("yamnet_label_list.txt")).readBytes())
             }
         }
     }
@@ -113,7 +121,9 @@ dependencies {
 
     implementation("com.github.mik3y:usb-serial-for-android:3.8.1")
     implementation("com.google.mediapipe:tasks-vision:0.10.14")
-    implementation("com.google.mediapipe:tasks-audio:0.10.14")
+    // YAMNet runs on plain LiteRT: loading MediaPipe's audio library next to its vision
+    // library breaks one of them (both bundle the same JNI entry points).
+    implementation("com.google.ai.edge.litert:litert:1.0.1")
 
     testImplementation("junit:junit:4.13.2")
 }

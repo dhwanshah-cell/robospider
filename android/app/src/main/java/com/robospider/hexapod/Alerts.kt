@@ -29,7 +29,7 @@ class AlertSender(private val context: Context) {
     fun compose(title: String, what: String, jpeg: ByteArray?): Alert {
         val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
         val loc = lastLocation()
-        val where = loc?.let { "%.6f,%.6f (±%.0f m)".format(Locale.US, it.latitude, it.longitude, it.accuracy) }
+        val where = loc?.let { "%.6f,%.6f (+/-%.0f m)".format(Locale.US, it.latitude, it.longitude, it.accuracy) }
         val msg = buildString {
             append(what)
             append("\nTime: ").append(time)

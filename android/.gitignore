@@ -6,3 +6,4 @@ local.properties
 .kotlin/
 # Downloaded at build time by the downloadModels task
 app/src/main/assets/*.tflite
+app/src/main/assets/yamnet_labels.txt

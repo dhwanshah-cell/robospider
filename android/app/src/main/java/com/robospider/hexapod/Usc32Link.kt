@@ -30,11 +30,14 @@ class Usc32Link(private val context: Context, private val onEvent: (Event) -> Un
     sealed interface Event {
         data class Status(val connected: Boolean, val text: String) : Event
         data class Sent(val line: String, val dryRun: Boolean) : Event
+        /** What the phone sees on USB, for the diagnostics line. */
+        data class Devices(val text: String) : Event
     }
 
     private val usb = context.getSystemService(Context.USB_SERVICE) as UsbManager
     private val permissionAction = context.packageName + ".USB_PERMISSION"
     private var port: UsbSerialPort? = null
+    private var awaitingPermission = false
     var baud = 9600
         private set
 
@@ -46,6 +49,7 @@ class Usc32Link(private val context: Context, private val onEvent: (Event) -> Un
         override fun onReceive(ctx: Context, intent: Intent) {
             when (intent.action) {
                 permissionAction -> {
+                    awaitingPermission = false
                     if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) connect()
                     else status(false, "USB permission denied — tap Connect to ask again")
                 }
@@ -79,12 +83,34 @@ class Usc32Link(private val context: Context, private val onEvent: (Event) -> Un
         return usb.deviceList.values.firstOrNull()?.let { CdcAcmSerialDriver(it) }
     }
 
-    /** Update the status line without opening anything. */
+    /**
+     * Re-check what's plugged in. Connects straight away when Android has already granted
+     * access (e.g. the app was opened from the plug-in popup); otherwise just updates the status.
+     */
     fun refresh() {
-        if (port != null) return
+        onEvent(Event.Devices(diagnostics()))
+        if (port != null || awaitingPermission) return
         val d = findDriver()
-        if (d == null) status(false, "No USB device seen — dry run")
-        else status(false, "${describe(d.device)} found — tap Connect")
+        when {
+            d == null -> status(false, "No USB device seen — dry run")
+            usb.hasPermission(d.device) -> connect()
+            else -> status(false, "${describe(d.device)} found — tap Connect")
+        }
+    }
+
+    /** One line per USB device: ids, names, interface classes, driver, permission. */
+    private fun diagnostics(): String {
+        val devices = usb.deviceList.values
+        if (devices.isEmpty()) return "usb: nothing attached (check OTG adapter, cable, board power)"
+        val prober = UsbSerialProber.getDefaultProber()
+        return devices.joinToString("\n") { d ->
+            val ifaces = (0 until d.interfaceCount).joinToString(",") { "%02X".format(d.getInterface(it).interfaceClass) }
+            val driver = prober.probeDevice(d)?.javaClass?.simpleName?.removeSuffix("SerialDriver") ?: "none→CDC"
+            "usb: %04X:%04X %s %s · if[%s] · %s · perm %s".format(
+                d.vendorId, d.productId, d.manufacturerName ?: "", d.productName ?: "", ifaces, driver,
+                if (usb.hasPermission(d)) "yes" else "no",
+            ).replace("  ", " ")
+        }
     }
 
     fun setBaud(value: Int) {
@@ -106,12 +132,13 @@ class Usc32Link(private val context: Context, private val onEvent: (Event) -> Un
         if (!usb.hasPermission(device)) {
             val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
             val intent = Intent(permissionAction).setPackage(context.packageName)
+            awaitingPermission = true
             usb.requestPermission(device, PendingIntent.getBroadcast(context, 0, intent, flags))
             return status(false, "Allow USB access in the popup")
         }
         val conn = usb.openDevice(device) ?: return status(false, "Couldn't open ${describe(device)}")
         try {
-            val p = driver.ports[0]
+            val p = driver.ports.firstOrNull() ?: error("no serial port on this device")
             p.open(conn)
             p.setParameters(baud, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE)
             try {
@@ -124,8 +151,9 @@ class Usc32Link(private val context: Context, private val onEvent: (Event) -> Un
             status(true, "Connected: ${describe(device)} @ $baud")
         } catch (e: Exception) {
             conn.close()
-            status(false, "Open failed (${e.javaClass.simpleName}) — dry run")
+            status(false, "Open failed: ${e.javaClass.simpleName} ${e.message ?: ""} — dry run".trim())
         }
+        onEvent(Event.Devices(diagnostics()))
     }
 
     fun close() {
