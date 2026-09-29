@@ -26,8 +26,8 @@ android {
         targetSdk = 35
         versionCode = appVersionCode
         versionName = appVersionName
-        // Phones only; drops the emulator (x86) copies of the MediaPipe native libraries.
-        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
+        // 64-bit ARM phones only; drops the 32-bit and emulator copies of the MediaPipe libraries.
+        ndk { abiFilters += listOf("arm64-v8a") }
         buildConfigField("String", "BUILD_STAMP", "\"b%03d-%s\"".format(appVersionCode, buildStamp))
     }
 
@@ -61,6 +61,10 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+    // Compress the MediaPipe native libraries: a much smaller APK to download.
+    packaging {
+        jniLibs.useLegacyPackaging = true
     }
     androidResources {
         noCompress += "tflite"
